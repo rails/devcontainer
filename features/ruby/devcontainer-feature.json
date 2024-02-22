@@ -1,0 +1,25 @@
+{
+    "id": "ruby",
+    "version": "0.1.0",
+    "name": "Ruby (via rbenv)",
+    "description": "Installs Ruby, rbenv, ruby-build and libraries needed to build Ruby",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "shopify.ruby-lsp"
+            ]
+        }
+    },
+    "containerEnv": {
+        "PATH": "/usr/local/share/rbenv/bin:${PATH}"
+    },
+    "installsAfter": [
+        "ghcr.io/devcontainers/features/common-utils"
+    ],
+    "options": {
+        "version": {
+            "type": "string",
+            "description": "The ruby version to be installed"
+        }
+    }
+}
