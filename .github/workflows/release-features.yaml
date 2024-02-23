@@ -1,0 +1,24 @@
+name: "Release devcontainer features"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Publish"
+        uses: devcontainers/action@v1
+        with:
+          publish-features: "true"
+          base-path-to-features: "./features"
+          features-namespace: "devcontainer/features"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
