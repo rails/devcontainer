@@ -21,6 +21,11 @@
             "type": "string",
             "default": "3.3.0",
             "description": "The ruby version to be installed"
+        },
+        "installLibPq": {
+            "type": "boolean",
+            "default": false,
+            "description": "Install `libpq-dev` for PostgreSQL support?"
         }
     }
 }
