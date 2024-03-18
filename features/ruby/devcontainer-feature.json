@@ -16,6 +16,9 @@
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils"
     ],
+    "dependsOn": {
+        "ghcr.io/devcontainers/features/rust": {}
+    },
     "options": {
         "version": {
             "type": "string",
