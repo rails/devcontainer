@@ -49,8 +49,6 @@ jobs:
         with:
           imageName: ghcr.io/rails/devcontainer/images/ruby
           cacheFrom: ghcr.io/rails/devcontainer/images/ruby
-          imageTag:
-            - 0.2.0-${{ matrix.RUBY_VERSION }}
-            - ${{ matrix.RUBY_VERSION }} ]
+          imageTag: 0.2.0-${{ matrix.RUBY_VERSION }},${{ matrix.RUBY_VERSION }}
           subFolder: images/ruby
           push: always
