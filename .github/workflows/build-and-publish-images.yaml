@@ -30,10 +30,19 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
     steps:
       - name: Checkout (GitHub)
         uses: actions/checkout@v3
+
+      - name: Set up QEMU for multi-architecture builds
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -46,10 +55,10 @@ jobs:
         uses: devcontainers/ci@v0.3
         env:
           RUBY_VERSION: ${{ matrix.RUBY_VERSION }}
+          BUILDX_NO_DEFAULT_ATTESTATIONS: true
         with:
           imageName: ghcr.io/rails/devcontainer/images/ruby
-          cacheFrom: ghcr.io/rails/devcontainer/images/ruby
           imageTag: 0.3.0-${{ matrix.RUBY_VERSION }},${{ matrix.RUBY_VERSION }}
           subFolder: images/ruby
           push: always
-          platform: linux/arm64,linux/amd64
+          platform: linux/amd64,linux/arm64
