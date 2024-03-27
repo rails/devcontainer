@@ -1,7 +1,8 @@
 name: Build and Publish Images
 
 on:
-  workflow_dispatch:
+  push:
+    tags: [ 'ruby-*.*.*' ]
 
 jobs:
   build:
@@ -45,6 +46,9 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
 
+      - name: Set Image version env variable
+        run: echo "IMAGE_VERSION=$(echo ${{ github.ref_name }} | tr -d ruby-)" >> $GITHUB_ENV
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -59,7 +63,7 @@ jobs:
           BUILDX_NO_DEFAULT_ATTESTATIONS: true
         with:
           imageName: ghcr.io/rails/devcontainer/images/ruby
-          imageTag: 0.3.0-${{ matrix.RUBY_VERSION }},${{ matrix.RUBY_VERSION }}
+          imageTag: ${{ env.IMAGE_VERSION }}-${{ matrix.RUBY_VERSION }},${{ matrix.RUBY_VERSION }}
           subFolder: images/ruby
           push: always
           platform: linux/amd64,linux/arm64
