@@ -1,7 +1,8 @@
 USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
 
 apt-get update -y
-apt-get -y install --no-install-recommends libssl-dev libreadline-dev zlib1g-dev autoconf bison build-essential libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev
+apt-get -y install --no-install-recommends libssl-dev libreadline-dev zlib1g-dev autoconf bison build-essential \
+ libyaml-dev libreadline-dev libncurses5-dev libffi-dev libgdbm-dev libxml2-dev
 
 git clone https://github.com/rbenv/rbenv.git /usr/local/share/rbenv
 git clone https://github.com/rbenv/ruby-build.git /usr/local/share/ruby-build
