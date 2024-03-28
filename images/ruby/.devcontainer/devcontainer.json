@@ -15,7 +15,7 @@
       "version": "latest",
       "ppa": "false"
     },
-    "ghcr.io/rails/devcontainer/features/ruby:0.2.0": {
+    "ghcr.io/rails/devcontainer/features/ruby": {
       "version": "${localEnv:RUBY_VERSION}"
     }
   },
