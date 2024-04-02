@@ -1,0 +1,6 @@
+{
+    "id": "postgres-client",
+    "version": "0.1.0",
+    "name": "Postgres Client",
+    "description": "Installs needed client-side dependencies for Rails apps using Postgres"
+}
