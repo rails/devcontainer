@@ -1,0 +1,6 @@
+{
+    "id": "activestorage",
+    "version": "0.1.0",
+    "name": "Active Storage",
+    "description": "Installs utilities needed for Rails Active Storage"
+}
