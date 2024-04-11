@@ -1,0 +1,32 @@
+name: Test ruby feature
+
+on:
+  push:
+
+jobs:
+  build:
+    name: Test ruby feature
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v3
+
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and test devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/rails/devcontainer/test-ruby-feature
+          cacheFrom: ghcr.io/rails/devcontainer/test-ruby-feature
+          subFolder: .github
+          refFilterForPush: refs/heads/main
+          runCmd: ruby -v || ( echo "Ruby is not installed."; exit 1 )
