@@ -13,7 +13,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout (GitHub)
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ inputs.image_tag }}
 
@@ -47,3 +47,6 @@ runs:
         subFolder: images/ruby
         push: always
         platform: linux/amd64,linux/arm64
+
+    - name: Checkout (GitHub)
+      uses: actions/checkout@v4
