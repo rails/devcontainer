@@ -39,3 +39,15 @@ the same process as for features.
 The image is published using the [devcontainers/ci](https://github.com/devcontainers/ci) Github Action. This workflow
 is kicked off by the creation of a new tag on Github. Tags should be in the form `ruby-*.*.*`, where the * represent
 the **image version** (not the ruby version). Images will be published for all `3.*.*` ruby versions.
+
+## Publishing new Ruby versions
+
+When a new Ruby version is released, we can build and publish the existing image for the new ruby version, without
+needing to cut a new version of the image itself. To do this, we can run the Publish New Ruby Versions workflow
+manually. The workflow takes a list of a ruby versions and a list of image tags as inputs. They should be formatted
+as comma separated arrays. For example:
+
+```
+ruby_versions: ["3.3.1","3.2.4","3.1.5","3.0.7"]
+image_versions: ["ruby-0.3.0"]
+```
