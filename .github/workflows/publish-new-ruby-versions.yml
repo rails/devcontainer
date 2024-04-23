@@ -1,0 +1,39 @@
+name: Build and Publish New Ruby Versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      ruby_versions:
+        type: string
+        required: true
+        description: List of ruby versions to build. Should be an array ["3.3.1","3.2.4"]
+      image_versions:
+        type: string
+        required: true
+        description: List of image versions to build. Should be an array ["ruby-0.3.0"]
+
+jobs:
+  build:
+    name: Build Images
+
+    strategy:
+      fail-fast: false
+      matrix:
+        RUBY_VERSION:  ${{ fromJSON(github.event.inputs.ruby_versions)}}
+        IMAGE_VERSION:  ${{ fromJSON(github.event.inputs.image_versions)}}
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v3
+
+      - name: Build and Publish Image
+        uses: ./.github/actions/build-and-publish-image.yml
+        with:
+          ruby_version: ${{ matrix.RUBY_VERSION }}
+          image_tag:  ${{ matrix.IMAGE_VERSION }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          repository_owner: ${{ github.repository_owner }}
