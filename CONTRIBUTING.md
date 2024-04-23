@@ -23,7 +23,7 @@ is the best place to start.
 
 Features are released using the [devcontainers/action](https://github.com/devcontainers/action) Github Action. When
 the `version` in a feature's `devcontainer-feature.json` is updated on the `main` branch, this action will publish a
-new version of that feature to `ghcr.io/rails/devcontainer/features/[feature name]`. 
+new version of that feature to `ghcr.io/rails/devcontainer/features/[feature name]`.
 
 ## Contributing to the ruby image
 
@@ -48,6 +48,6 @@ manually. The workflow takes a list of a ruby versions and a list of image tags 
 as comma separated arrays. For example:
 
 ```
-ruby_versions: ["3.3.1","3.2.4","3.1.5","3.0.7"]
+ruby_versions: ["3.3.1","3.2.4","3.1.5"]
 image_versions: ["ruby-0.3.0"]
 ```
