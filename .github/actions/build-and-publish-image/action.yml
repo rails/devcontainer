@@ -3,12 +3,16 @@ description: Steps for building an image for a specific ruby version
 inputs:
   ruby_version:
     required: true
+    description: "The version of Ruby to build the image for"
   image_tag:
     required: true
+    description: "The tag to use for the image"
   gh_token:
     required: true
+    description: "The GitHub token to use for authentication"
   repository_owner:
     required: true
+    description: "The owner of the repository"
 runs:
   using: "composite"
   steps:
