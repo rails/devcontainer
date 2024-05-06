@@ -1,0 +1,6 @@
+{
+    "id": "sqlite3",
+    "version": "0.1.0",
+    "name": "SQLite3",
+    "description": "Installs needed dependencies for Rails apps using SQLite3"
+}
