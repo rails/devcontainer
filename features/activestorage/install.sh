@@ -1,3 +1,6 @@
+#!/bin/sh
+set -e
+
 apt-get update -qq && \
   apt-get install --no-install-recommends -y \
     libvips \

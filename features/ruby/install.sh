@@ -1,3 +1,6 @@
+#!/bin/sh
+set -e
+
 USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
 
 apt-get update -y
