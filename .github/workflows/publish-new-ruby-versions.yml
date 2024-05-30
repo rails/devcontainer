@@ -10,7 +10,7 @@ on:
       image_versions:
         type: string
         required: true
-        description: List of image versions to build. Should be an array ["ruby-0.3.0"]
+        description: List of image versions to build. Should be an array ["ruby-1.1.0"]
 
 jobs:
   build:

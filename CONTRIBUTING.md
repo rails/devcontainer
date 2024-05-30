@@ -49,5 +49,5 @@ as comma separated arrays. For example:
 
 ```
 ruby_versions: ["3.3.1","3.2.4","3.1.5"]
-image_versions: ["ruby-0.3.0"]
+image_versions: ["ruby-1.1.0"]
 ```
