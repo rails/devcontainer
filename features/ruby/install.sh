@@ -21,6 +21,10 @@ if [ "${USERNAME}" != "root" ]; then
     chmod -R g+r+w "/home/${USERNAME}/.rbenv"
 
     echo 'eval "$(rbenv init -)"' >> /home/${USERNAME}/.bashrc
+
+    if [ -f /home/${USERNAME}/.zshrc ]; then
+        echo 'eval "$(rbenv init -)"' >> /home/${USERNAME}/.zshrc
+    fi
 fi
 
 su ${USERNAME} -c "rbenv install $VERSION"
