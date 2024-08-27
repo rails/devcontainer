@@ -12,6 +12,10 @@ Installs libvips, ffmpeg and poppler-utils which are required to use Active Stor
 
 ## Options
 
+| Options Id | Description | Type | Default Value |
+|-----|-----|-----|-----|
+| variantProcessor | The image processing library to use with Active Storage | string | vips |
+
 ## Customizations
 
 ### VS Code Extensions
