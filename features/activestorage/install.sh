@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-if [ "$VARIANTPROCESSOR" = "mini_magick"]; then
+if [ "$VARIANTPROCESSOR" = "mini_magick" ]; then
   IMAGE_PROCESSOR="imagemagick"
 else
   IMAGE_PROCESSOR="libvips"
