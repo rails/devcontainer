@@ -1,6 +1,6 @@
 {
     "id": "activestorage",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "name": "Active Storage",
     "description": "Installs utilities needed for Rails Active Storage",
     "options": {
