@@ -1,6 +1,6 @@
 {
   "id": "bundler-cache",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Bundler cache",
   "description": "Creates a volume for persisting the installed gems across different containers",
   "containerEnv": {
@@ -13,5 +13,5 @@
       "type": "volume"
     }
   ],
-  "postCreateCommand": "/usr/local/share/bundler-data-permissions.sh"
+  "postCreateCommand": "sudo chown -R ${USER} /bundle"
 }
