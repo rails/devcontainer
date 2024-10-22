@@ -1,6 +1,17 @@
 #!/bin/sh
 set -e
 
-apt-get update -y && apt-get -y install --no-install-recommends libpq-dev postgresql-client
+export POSTGRES_CLIENT_VERSION="${VERSION:-"15"}"
+
+apt-get update -qq
+
+VERSION_EXISTS=$(apt-cache search --names-only postgresql-client-$POSTGRES_CLIENT_VERSION | wc -l)
+
+if [ "$VERSION_EXISTS" -ge 1 ]; then
+  apt-get install --no-install-recommends -y postgresql-client-$POSTGRES_CLIENT_VERSION
+else
+  apt-get install --no-install-recommends -y postgresql-common
+  /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && apt-get install --no-install-recommends -y postgresql-client-$POSTGRES_CLIENT_VERSION
+fi
 
 rm -rf /var/lib/apt/lists/*
