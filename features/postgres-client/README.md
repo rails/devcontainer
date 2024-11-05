@@ -14,6 +14,9 @@ service using the official [Postgres docker image](https://hub.docker.com/_/post
 ```
 
 ## Options
+| Options Id | Description | Type | Default Value |
+|-----|-----|-----|-----|
+| version | The postgres-client version | string | 15 |
 
 ## Customizations
 
