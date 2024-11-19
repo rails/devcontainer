@@ -1,6 +1,6 @@
 # Bun
 
-Installs needed client-side dependencies for Rails apps using Bun.
+Installs needed dependencies for Rails apps using Bun.
 
 ## Example Usage
 
@@ -16,6 +16,6 @@ Installs needed client-side dependencies for Rails apps using Bun.
 
 ## OS Support
 
-This Feature should work on recent versions of Debian/Ubuntu-based distributions with the `apt` package manager installed.
+This Feature should work on recent versions of Debian/Ubuntu-based distributions with `curl` installed.
 
 `bash` is required to execute the `install.sh` script.
