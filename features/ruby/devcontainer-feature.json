@@ -19,7 +19,7 @@
     "options": {
         "version": {
             "type": "string",
-            "default": "3.4.0",
+            "default": "3.4.1",
             "description": "The ruby version to be installed"
         }
     }
