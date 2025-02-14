@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Check if Ruby version is provided
+if [ -z "$1" ]; then
+  echo "Usage: $0 <ruby-version>"
+  exit 1
+fi
+
+RUBY_VERSION=$1
+
+devcontainer build --workspace-folder images/ruby --image-name ghcr.io/rails/devcontainer/images/ruby:$RUBY_VERSION --output /tmp/output.tar
