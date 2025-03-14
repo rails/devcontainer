@@ -1,7 +1,8 @@
 {
   "build": {
     "dockerfile": "./Dockerfile",
-    "context": "."
+    "context": ".",
+    "options": ["--platform=linux/amd64"]
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
