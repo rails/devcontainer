@@ -1,6 +1,13 @@
 {
     "id": "postgres-client",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "name": "Postgres Client",
-    "description": "Installs needed client-side dependencies for Rails apps using Postgres"
+    "description": "Installs needed client-side dependencies for Rails apps using Postgres",
+    "options": {
+        "version": {
+            "type": "string",
+            "default": "15",
+            "description": "The postgres client version to be installed"
+        }
+    }
 }
