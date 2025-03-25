@@ -1,6 +1,6 @@
 {
     "id": "bun",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "name": "Bun",
     "description": "Installs needed client-side dependencies for Rails apps using Bun"
 }
