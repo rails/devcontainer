@@ -22,21 +22,21 @@
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
-				"settings": {
-						"json.schemas": [
-								{
-										"fileMatch": [
-												"*/devcontainer-feature.json"
-										],
-										"url": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainerFeature.schema.json"
-								}
-						]
-				},
-				"extensions": [
-						"mads-hartmann.bash-ide-vscode"
+			"settings": {
+				"json.schemas": [
+					{
+						"fileMatch": [
+							"*/devcontainer-feature.json"
+						],
+						"url": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainerFeature.schema.json"
+					}
 				]
+			},
+			"extensions": [
+				"mads-hartmann.bash-ide-vscode"
+			]
 		}
-},
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "node",
