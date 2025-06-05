@@ -1,0 +1,18 @@
+{
+  "version_16": {
+      "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+      "features": {
+          "postgres-client": {
+            "version": "16"
+          }
+      }
+  },
+  "version_14": {
+    "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+    "features": {
+      "postgres-client": {
+        "version": "14"
+      }
+    }
+  }
+}

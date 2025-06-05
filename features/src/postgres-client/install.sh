@@ -5,6 +5,8 @@ export POSTGRES_CLIENT_VERSION="${VERSION:-"15"}"
 
 apt-get update -qq
 
+apt-get install -y gnupg ca-certificates
+
 VERSION_EXISTS=$(apt-cache search --names-only postgresql-client-$POSTGRES_CLIENT_VERSION | wc -l)
 
 if [ "$VERSION_EXISTS" -ge 1 ]; then
