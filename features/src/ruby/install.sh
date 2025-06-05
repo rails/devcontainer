@@ -4,7 +4,7 @@ set -e
 USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
 
 apt-get update -y
-apt-get -y install --no-install-recommends libssl-dev libreadline-dev zlib1g-dev autoconf bison build-essential \
+apt-get -y install --no-install-recommends git curl ca-certificates libssl-dev libreadline-dev zlib1g-dev autoconf bison build-essential \
  libyaml-dev libncurses5-dev libffi-dev libgdbm-dev libxml2-dev rustc
 
 git clone https://github.com/rbenv/rbenv.git /usr/local/share/rbenv
@@ -27,7 +27,7 @@ if [ "${USERNAME}" != "root" ]; then
     fi
 fi
 
-su ${USERNAME} -c "rbenv install $VERSION"
-su ${USERNAME} -c "rbenv global $VERSION"
+su ${USERNAME} -c "/usr/local/share/rbenv/bin/rbenv install $VERSION"
+su ${USERNAME} -c "/usr/local/share/rbenv/bin/rbenv global $VERSION"
 
 rm -rf /var/lib/apt/lists/*

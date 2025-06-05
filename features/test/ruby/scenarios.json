@@ -1,0 +1,10 @@
+{
+  "version_3_3_0": {
+    "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+    "features": {
+      "ruby": {
+        "version": "3.3.0"
+      }
+    }
+  }
+}

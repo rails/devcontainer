@@ -18,6 +18,7 @@ jobs:
           - sqlite3
           - activestorage
           - postgres-client
+          - ruby
         baseImage:
           - debian:latest
           - ubuntu:latest
@@ -40,6 +41,7 @@ jobs:
         features:
           - activestorage
           - postgres-client
+          - ruby
     steps:
       - uses: actions/checkout@v4
 
