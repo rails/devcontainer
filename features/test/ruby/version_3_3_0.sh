@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# shellcheck source=/dev/null
 source dev-container-features-test-lib
 
 check "PATH contains rbenv" bash -c "echo $PATH | grep rbenv"

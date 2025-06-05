@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# shellcheck source=/dev/null
 source dev-container-features-test-lib
 
 check "Sqlite3 is installed" bash -c "sqlite3 --version"
