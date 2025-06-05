@@ -2,6 +2,7 @@
 set -e
 
 USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
+VERSION_MANAGER="${VERSIONMANAGER:-"mise"}"
 
 # Function to install dependencies needed for building Ruby
 install_dependencies() {
@@ -79,10 +80,41 @@ install_ruby_rbenv() {
     su "$_user" -c "/usr/local/share/rbenv/bin/rbenv global $_version"
 }
 
+# Function to setup mise
+setup_mise() {
+    _user="$1"
+
+    su "$_user" -c "curl https://mise.run | sh"
+
+    # shellcheck disable=SC2016
+    add_to_shell_init "$_user" 'eval "$(~/.local/bin/mise activate bash)"' 'eval "$(~/.local/bin/mise activate zsh)"'
+}
+
+# Function to install Ruby with mise
+install_ruby_mise() {
+    _user="$1"
+    _version="$2"
+
+    if [ "$_user" = "root" ]; then
+        _home_dir="/root"
+    else
+        _home_dir="/home/$_user"
+    fi
+
+    su "$_user" -c "$_home_dir/.local/bin/mise install ruby@$_version"
+    su "$_user" -c "$_home_dir/.local/bin/mise use -g ruby@$_version"
+    su "$_user" -c "$_home_dir/.local/bin/mise settings add idiomatic_version_file_enable_tools ruby"
+}
+
 install_dependencies
 
-setup_rbenv "${USERNAME}"
-
-install_ruby_rbenv "$USERNAME" "$VERSION"
+# Setup version manager and install Ruby based on user choice
+if [ "$VERSION_MANAGER" = "rbenv" ]; then
+    setup_rbenv "$USERNAME"
+    install_ruby_rbenv "$USERNAME" "$VERSION"
+else
+    setup_mise "$USERNAME"
+    install_ruby_mise "$USERNAME" "$VERSION"
+fi
 
 rm -rf /var/lib/apt/lists/*

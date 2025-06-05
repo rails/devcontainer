@@ -6,5 +6,13 @@
         "version": "3.3.0"
       }
     }
+  },
+  "with_rbenv": {
+    "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+    "features": {
+      "ruby": {
+        "versionManager": "rbenv"
+      }
+    }
   }
 }
