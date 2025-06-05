@@ -18,7 +18,7 @@ jobs:
         uses: devcontainers/action@v1
         with:
           publish-features: "true"
-          base-path-to-features: "./features"
+          base-path-to-features: "./features/src"
           features-namespace: "rails/devcontainer/features"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
