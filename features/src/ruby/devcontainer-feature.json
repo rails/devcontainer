@@ -1,6 +1,6 @@
 {
     "id": "ruby",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "name": "Ruby (via rbenv)",
     "description": "Installs Ruby, rbenv, ruby-build and libraries needed to build Ruby",
     "customizations": {
