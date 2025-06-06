@@ -1,0 +1,10 @@
+{
+  "image_processor_imagemagick": {
+      "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+      "features": {
+          "activestorage": {
+            "variantProcessor": "mini_magick"
+          }
+      }
+  }
+}
