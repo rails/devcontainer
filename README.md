@@ -1,12 +1,12 @@
 # Rails Dev Container Images & Features
 
-This repository contains dev container images and features that can be used to create a convenient and consistent 
+This repository contains dev container images and features that can be used to create a convenient and consistent
 development environment for working on Rails applications.
 
 ## What is a dev container?
 
-A **dev container** is a running Docker container that provides a fully-featured development environment  which can be 
-used to run an application, to separate tools, libraries, or runtimes needed for working with a codebase, and to aid in 
+A **dev container** is a running Docker container that provides a fully-featured development environment  which can be
+used to run an application, to separate tools, libraries, or runtimes needed for working with a codebase, and to aid in
 continuous integration and testing. **Dev container features** are self-contained units of installation and configuration
 that can be installed on top of a container image to provide additional functionality in a container. **Dev container
 images** are prebuilt docker images based on dev container features. For more information on the dev container
@@ -30,8 +30,8 @@ would look like this:
 }
 ```
 
-This dev container uses the Ruby image, which includes an installation of Ruby (in this case version 3.3.0) and the RBenv
-version manager, as well as other common utilities such as Git. It also uses the Active Storage feature, which installs 
+This dev container uses the Ruby image, which includes an installation of Ruby (in this case version 3.3.0) and a Ruby
+version manager (mise by default, but configurable to use rbenv), as well as other common utilities such as Git. It also uses the Active Storage feature, which installs
 dependencies needed for Active Storage.
 
 The dev container can be initialized [by VSCode](https://code.visualstudio.com/docs/devcontainers/containers) or by using
@@ -50,7 +50,7 @@ This repository is open for contributions. See [the contributions guide](CONTRIB
 
 You can create your own features, and images based on them.
 
-The best place to start is the [feature starter repository](https://github.com/devcontainers/feature-starter) which is 
+The best place to start is the [feature starter repository](https://github.com/devcontainers/feature-starter) which is
 maintained by the devcontainers org.
 
 ## License
