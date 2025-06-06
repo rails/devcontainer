@@ -20,6 +20,7 @@ jobs:
         uses: devcontainers/action@v1
         with:
           publish-features: "true"
+          generate-docs: "true"
           base-path-to-features: "./features/src"
           features-namespace: "rails/devcontainer/features"
         env:
