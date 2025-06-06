@@ -10,9 +10,6 @@
             ]
         }
     },
-    "containerEnv": {
-        "PATH": "/usr/local/share/rbenv/bin:${PATH}"
-    },
     "installsAfter": [
         "ghcr.io/devcontainers/features/common-utils"
     ],
