@@ -2,7 +2,7 @@
   "id": "bundler-cache",
   "version": "1.0.1",
   "name": "Bundler cache",
-  "description": "Creates a volume for persisting the installed gems across different containers",
+  "description": "Creates a volume for persisting the installed gems across different containers.",
   "containerEnv": {
     "BUNDLE_PATH": "/bundle/vendor"
   },
