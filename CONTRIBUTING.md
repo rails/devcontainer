@@ -38,7 +38,7 @@ the same process as for features.
 
 The image is published using the [devcontainers/ci](https://github.com/devcontainers/ci) Github Action. This workflow
 is kicked off by the creation of a new tag on Github. Tags should be in the form `ruby-*.*.*`, where the * represent
-the **image version** (not the ruby version). Images will be published for all `3.*.*` ruby versions.
+the **image version** (not the ruby version). Images will be published for all [maintained Ruby versions](https://www.ruby-lang.org/en/downloads/).
 
 ## Publishing new Ruby versions
 
