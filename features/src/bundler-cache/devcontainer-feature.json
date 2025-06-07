@@ -3,6 +3,8 @@
   "version": "1.0.1",
   "name": "Bundler cache",
   "description": "Creates a volume for persisting the installed gems across different containers.",
+  "documentationUrl": "https://github.com/rails/devcontainer/tree/main/features/src/bundler-cache",
+  "licenseUrl": "https://github.com/rails/devcontainer/blob/main/LICENSE.md",
   "containerEnv": {
     "BUNDLE_PATH": "/bundle/vendor"
   },

@@ -3,6 +3,8 @@
     "version": "2.0.0",
     "name": "Ruby",
     "description": "Installs Ruby and a version manager (mise or rbenv) along with libraries needed to build Ruby.",
+    "documentationUrl": "https://github.com/rails/devcontainer/tree/main/features/src/ruby",
+    "licenseUrl": "https://github.com/rails/devcontainer/blob/main/LICENSE.md",
     "customizations": {
         "vscode": {
             "extensions": [
