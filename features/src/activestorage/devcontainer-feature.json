@@ -3,6 +3,8 @@
     "version": "1.1.1",
     "name": "Active Storage",
     "description": "Installs libvips, ffmpeg and poppler-utils which are required to use Active Storage for Rails apps.",
+    "documentationUrl": "https://github.com/rails/devcontainer/tree/main/features/src/activestorage",
+    "licenseUrl": "https://github.com/rails/devcontainer/blob/main/LICENSE.md",
     "options": {
         "variantProcessor": {
             "type": "string",
