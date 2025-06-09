@@ -42,12 +42,37 @@ the **image version** (not the ruby version). Images will be published for all [
 
 ## Publishing new Ruby versions
 
-When a new Ruby version is released, we can build and publish the existing image for the new ruby version, without
-needing to cut a new version of the image itself. To do this, we can run the Publish New Ruby Versions workflow
-manually. The workflow takes a list of a ruby versions and a list of image tags as inputs. They should be formatted
-as comma separated arrays. For example:
+When a new Ruby version is released, we need to add it to the build matrix and potentially update the default version.
+
+### Step 1: Add the Ruby version to the build matrix
+
+Use the automated script to update the configuration files:
+
+```bash
+bin/add-ruby-version 3.4.5
+```
+
+This script will:
+- Add the version to the build matrix in `.github/workflows/publish-new-image-version.yaml`
+- Update the default version in `features/src/ruby/devcontainer-feature.json` if the new version is newer
+- Maintain proper semantic version ordering
+- Prevent duplicate entries
+
+After running the script, review the changes with `git diff`, commit them, and push.
+
+### Step 2: Publish the Ruby version
+
+You have two options:
+
+#### Option A: Publish specific Ruby versions (common)
+
+For immediate publishing of specific Ruby versions without cutting a new image version, run the **Publish New Ruby Versions** workflow manually. The workflow takes a list of ruby versions and image tags as inputs, formatted as comma separated arrays:
 
 ```
-ruby_versions: ["3.3.1","3.2.4","3.1.5"]
+ruby_versions: ["3.4.5"]
 image_versions: ["ruby-1.1.0"]
 ```
+
+#### Option B: Wait for next image release (automatic)
+
+When a new image version is released (triggered by creating a `ruby-*.*.*` tag), the automatic workflow will build images for all Ruby versions in the matrix, including the newly added one.

@@ -1,0 +1,11 @@
+{
+  "name": "ruby-version-script",
+  "version": "1.0.0",
+  "description": "Script dependencies for adding Ruby versions",
+  "devDependencies": {
+    "js-yaml": "^4.1.0",
+    "semver": "^7.5.4",
+    "@devcontainers/cli": "^0.56.0"
+  },
+  "private": true
+}

@@ -1,0 +1,201 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
+const semver = require('semver');
+
+// ANSI color codes for better output
+const colors = {
+    reset: '\x1b[0m',
+    green: '\x1b[32m',
+    blue: '\x1b[34m',
+    yellow: '\x1b[33m',
+    red: '\x1b[31m',
+    cyan: '\x1b[36m',
+    magenta: '\x1b[35m'
+};
+
+// Emoji helpers
+const emoji = {
+    search: '🔍',
+    edit: '📝',
+    check: '✅',
+    update: '🔄',
+    info: 'ℹ️',
+    party: '🎉',
+    file: '📄',
+    bulb: '💡',
+    error: '❌'
+};
+
+function log(message, color = 'reset') {
+    console.log(colors[color] + message + colors.reset);
+}
+
+function validateVersionFormat(version) {
+    const versionRegex = /^[0-9]+\.[0-9]+\.[0-9]+$/;
+    return versionRegex.test(version);
+}
+
+function getCurrentDefaultVersion(jsonFile) {
+    try {
+        const content = fs.readFileSync(jsonFile, 'utf8');
+        const data = JSON.parse(content);
+        return data.options.version.default;
+    } catch (error) {
+        throw new Error(`Could not read current default version: ${error.message}`);
+    }
+}
+
+function versionExistsInYaml(version, yamlFile) {
+    try {
+        const content = fs.readFileSync(yamlFile, 'utf8');
+        const data = yaml.load(content);
+        const versions = data.jobs.build.strategy.matrix.RUBY_VERSION || [];
+        return versions.includes(version);
+    } catch (error) {
+        throw new Error(`Could not check if version exists: ${error.message}`);
+    }
+}
+
+function addVersionToYaml(newVersion, yamlFile) {
+    try {
+        // Read and parse the YAML file
+        const content = fs.readFileSync(yamlFile, 'utf8');
+        const data = yaml.load(content);
+
+        // Get current versions and add new one
+        const currentVersions = data.jobs.build.strategy.matrix.RUBY_VERSION || [];
+        const allVersions = [...new Set([...currentVersions, newVersion])];
+        const sortedVersions = allVersions.sort((a, b) => semver.rcompare(a, b));
+
+        // Update the data structure
+        data.jobs.build.strategy.matrix.RUBY_VERSION = sortedVersions;
+
+        // Write back to file with proper YAML formatting
+        const newContent = yaml.dump(data, {
+            indent: 2,
+            lineWidth: -1,
+            noRefs: true,
+            sortKeys: false,
+            noArrayIndent: false,
+            skipInvalid: false,
+            flowLevel: -1,
+            styles: {},
+            schema: yaml.DEFAULT_SCHEMA,
+            noCompatMode: false,
+            condenseFlow: false,
+            quotingType: '"',
+            forceQuotes: false
+        });
+
+        fs.writeFileSync(yamlFile, newContent);
+        return true;
+    } catch (error) {
+        throw new Error(`Could not update YAML file: ${error.message}`);
+    }
+}
+
+function updateDefaultInJson(newVersion, jsonFile) {
+    try {
+        const content = fs.readFileSync(jsonFile, 'utf8');
+        const data = JSON.parse(content);
+        data.options.version.default = newVersion;
+        fs.writeFileSync(jsonFile, JSON.stringify(data, null, 4) + '\n');
+        return true;
+    } catch (error) {
+        throw new Error(`Could not update JSON file: ${error.message}`);
+    }
+}
+
+function main() {
+    // Check command line arguments
+    const args = process.argv.slice(2);
+
+    if (args.length !== 1) {
+        log('Usage: bin/add-ruby-version <ruby-version>', 'red');
+        log('Example: bin/add-ruby-version 3.4.5', 'yellow');
+        process.exit(1);
+    }
+
+    const newVersion = args[0];
+    const yamlFile = '.github/workflows/publish-new-image-version.yaml';
+    const jsonFile = 'features/src/ruby/devcontainer-feature.json';
+
+    // Validate version format
+    if (!validateVersionFormat(newVersion)) {
+        log(`${emoji.error} Error: Invalid version format. Expected format: x.y.z (e.g., 3.4.5)`, 'red');
+        process.exit(1);
+    }
+
+    // Check if files exist
+    if (!fs.existsSync(yamlFile)) {
+        log(`${emoji.error} Error: ${yamlFile} not found`, 'red');
+        process.exit(1);
+    }
+
+    if (!fs.existsSync(jsonFile)) {
+        log(`${emoji.error} Error: ${jsonFile} not found`, 'red');
+        process.exit(1);
+    }
+
+    try {
+        // Check if version already exists
+        if (versionExistsInYaml(newVersion, yamlFile)) {
+            log(`${emoji.error} Error: Version ${newVersion} already exists in ${yamlFile}`, 'red');
+            process.exit(1);
+        }
+
+        log(`${emoji.search} Checking current configuration...`, 'cyan');
+
+        // Get current default version
+        const currentDefault = getCurrentDefaultVersion(jsonFile);
+        log(`Current default version: ${currentDefault}`);
+        log(`New version to add: ${newVersion}`);
+
+        // Add version to YAML file
+        log('');
+        log(`${emoji.edit} Adding ${newVersion} to ${yamlFile}...`, 'blue');
+        addVersionToYaml(newVersion, yamlFile);
+        log(`${emoji.check} Added to workflow matrix`, 'green');
+
+        // Check if new version should become the default
+        const comparisonResult = semver.compare(newVersion, currentDefault);
+        const filesModified = [yamlFile];
+
+        if (comparisonResult > 0) {
+            log('');
+            log(`${emoji.update} New version ${newVersion} is newer than current default ${currentDefault}`, 'yellow');
+            log(`Updating default version in ${jsonFile}...`);
+            updateDefaultInJson(newVersion, jsonFile);
+            log(`${emoji.check} Updated default version to ${newVersion}`, 'green');
+            filesModified.push(jsonFile);
+        } else {
+            log('');
+            log(`${emoji.info} New version ${newVersion} is not newer than current default ${currentDefault}`, 'cyan');
+            log('Default version remains unchanged');
+        }
+
+        // Success message
+        log('');
+        log(`${emoji.party} Successfully added Ruby version ${newVersion}!`, 'green');
+        log('');
+        log(`${emoji.file} Files modified:`, 'blue');
+        filesModified.forEach(file => {
+            log(`  • ${file}`);
+        });
+        log('');
+        log(`${emoji.bulb} Next steps:`, 'magenta');
+        log(`  1. Review the changes: git diff`);
+        log(`  2. Commit the changes: git add . && git commit -m 'Add Ruby ${newVersion}'`);
+        log(`  3. Push changes: git push`);
+
+    } catch (error) {
+        log(`${emoji.error} Error: ${error.message}`, 'red');
+        process.exit(1);
+    }
+}
+
+// Run the main function
+main();

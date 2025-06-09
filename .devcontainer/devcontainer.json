@@ -8,7 +8,7 @@
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
 	},
 
-	"updateContentCommand": "npm install -g @devcontainers/cli",
+	"updateContentCommand": "npm install",
 
 	"customizations": {
 		"vscode": {
