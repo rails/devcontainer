@@ -48,6 +48,6 @@ jobs:
         uses: ./.github/actions/build-and-publish-image
         with:
           ruby_version: ${{ matrix.RUBY_VERSION }}
-          image_tag:  ${{ github.ref_name }}
+          image_tag: ${{ github.ref_name }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}
           repository_owner: ${{ github.repository_owner }}
