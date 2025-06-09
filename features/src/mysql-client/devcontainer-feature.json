@@ -2,5 +2,7 @@
     "id": "mysql-client",
     "version": "1.1.1",
     "name": "MySQL Client",
-    "description": "Installs needed client-side dependencies for Rails apps using MySQL."
+    "description": "Installs needed client-side dependencies for Rails apps using MySQL.",
+    "documentationUrl": "https://github.com/rails/devcontainer/tree/main/features/src/mysql-client",
+    "licenseUrl": "https://github.com/rails/devcontainer/blob/main/LICENSE.md"
 }
