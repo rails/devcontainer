@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         RUBY_VERSION:
+          - 3.4.5
           - 3.4.4
           - 3.4.3
           - 3.4.2
