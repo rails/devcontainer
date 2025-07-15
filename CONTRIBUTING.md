@@ -14,7 +14,7 @@ yourself. For pull requests please use the following process:
 ## Contributing new features
 
 The goal of this repository is to provide features for all common Rails dependencies. If you believe something is missing
-that would be valueable to the Rails community, please open an issue in this repository.
+that would be valuable to the Rails community, please open an issue in this repository.
 
 For specialized use cases, you can also create your own features. The devcontainer org's [feature starter repository](https://github.com/devcontainers/feature-starter)
 is the best place to start.
