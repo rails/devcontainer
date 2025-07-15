@@ -55,6 +55,8 @@ bin/add-ruby-version 3.4.5
 This script will:
 - Add the version to the build matrix in `.github/workflows/publish-new-image-version.yaml`
 - Update the default version in `features/src/ruby/devcontainer-feature.json` if the new version is newer
+- Bump the feature version (patch increment) when the default Ruby version changes
+- Update test files to use the new Ruby version
 - Maintain proper semantic version ordering
 - Prevent duplicate entries
 

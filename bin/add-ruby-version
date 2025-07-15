@@ -109,6 +109,42 @@ function updateDefaultInJson(newVersion, jsonFile) {
     }
 }
 
+function updateVersionInTestFile(newVersion, testFile) {
+    try {
+        const content = fs.readFileSync(testFile, 'utf8');
+
+        // Replace version in the test file using regex to find the version pattern
+        const versionRegex = /(\d+\.\d+\.\d+)/g;
+        const updatedContent = content.replace(versionRegex, newVersion);
+
+        fs.writeFileSync(testFile, updatedContent);
+        return true;
+    } catch (error) {
+        throw new Error(`Could not update test file ${testFile}: ${error.message}`);
+    }
+}
+
+function bumpFeatureVersion(jsonFile) {
+    try {
+        const content = fs.readFileSync(jsonFile, 'utf8');
+        const data = JSON.parse(content);
+
+        // Parse current version and increment patch version
+        const currentVersion = data.version;
+        const incrementedVersion = semver.inc(currentVersion, 'patch');
+
+        data.version = incrementedVersion;
+        fs.writeFileSync(jsonFile, JSON.stringify(data, null, 4) + '\n');
+
+        return {
+            oldVersion: currentVersion,
+            newVersion: incrementedVersion
+        };
+    } catch (error) {
+        throw new Error(`Could not bump feature version: ${error.message}`);
+    }
+}
+
 function main() {
     // Check command line arguments
     const args = process.argv.slice(2);
@@ -122,6 +158,10 @@ function main() {
     const newVersion = args[0];
     const yamlFile = '.github/workflows/publish-new-image-version.yaml';
     const jsonFile = 'features/src/ruby/devcontainer-feature.json';
+    const testFiles = [
+        'features/test/ruby/test.sh',
+        'features/test/ruby/with_rbenv.sh'
+    ];
 
     // Validate version format
     if (!validateVersionFormat(newVersion)) {
@@ -138,6 +178,14 @@ function main() {
     if (!fs.existsSync(jsonFile)) {
         log(`${emoji.error} Error: ${jsonFile} not found`, 'red');
         process.exit(1);
+    }
+
+    // Check if test files exist
+    for (const testFile of testFiles) {
+        if (!fs.existsSync(testFile)) {
+            log(`${emoji.error} Error: ${testFile} not found`, 'red');
+            process.exit(1);
+        }
     }
 
     try {
@@ -170,11 +218,27 @@ function main() {
             log(`Updating default version in ${jsonFile}...`);
             updateDefaultInJson(newVersion, jsonFile);
             log(`${emoji.check} Updated default version to ${newVersion}`, 'green');
+
+            // Bump feature version when default changes
+            log('');
+            log(`${emoji.update} Bumping feature version...`, 'yellow');
+            const versionInfo = bumpFeatureVersion(jsonFile);
+            log(`${emoji.check} Feature version bumped from ${versionInfo.oldVersion} to ${versionInfo.newVersion}`, 'green');
+
             filesModified.push(jsonFile);
         } else {
             log('');
             log(`${emoji.info} New version ${newVersion} is not newer than current default ${currentDefault}`, 'cyan');
             log('Default version remains unchanged');
+        }
+
+        // Update test files
+        log('');
+        log(`${emoji.edit} Updating test files...`, 'blue');
+        for (const testFile of testFiles) {
+            updateVersionInTestFile(newVersion, testFile);
+            log(`${emoji.check} Updated ${testFile}`, 'green');
+            filesModified.push(testFile);
         }
 
         // Success message

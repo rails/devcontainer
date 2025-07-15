@@ -7,5 +7,8 @@
     "semver": "^7.5.4",
     "@devcontainers/cli": "^0.56.0"
   },
+  "scripts": {
+    "test": "devcontainer features test"
+  },
   "private": true
 }

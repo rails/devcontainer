@@ -1,6 +1,6 @@
 {
     "id": "ruby",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "name": "Ruby",
     "description": "Installs Ruby and a version manager (mise or rbenv) along with libraries needed to build Ruby.",
     "documentationURL": "https://github.com/rails/devcontainer/tree/main/features/src/ruby",
@@ -18,7 +18,7 @@
     "options": {
         "version": {
             "type": "string",
-            "default": "3.4.4",
+            "default": "3.4.5",
             "description": "The ruby version to be installed"
         },
         "versionManager": {
