@@ -124,6 +124,27 @@ function updateVersionInTestFile(newVersion, testFile) {
     }
 }
 
+function bumpFeatureVersion(jsonFile) {
+    try {
+        const content = fs.readFileSync(jsonFile, 'utf8');
+        const data = JSON.parse(content);
+
+        // Parse current version and increment patch version
+        const currentVersion = data.version;
+        const incrementedVersion = semver.inc(currentVersion, 'patch');
+
+        data.version = incrementedVersion;
+        fs.writeFileSync(jsonFile, JSON.stringify(data, null, 4) + '\n');
+
+        return {
+            oldVersion: currentVersion,
+            newVersion: incrementedVersion
+        };
+    } catch (error) {
+        throw new Error(`Could not bump feature version: ${error.message}`);
+    }
+}
+
 function main() {
     // Check command line arguments
     const args = process.argv.slice(2);
@@ -197,6 +218,13 @@ function main() {
             log(`Updating default version in ${jsonFile}...`);
             updateDefaultInJson(newVersion, jsonFile);
             log(`${emoji.check} Updated default version to ${newVersion}`, 'green');
+
+            // Bump feature version when default changes
+            log('');
+            log(`${emoji.update} Bumping feature version...`, 'yellow');
+            const versionInfo = bumpFeatureVersion(jsonFile);
+            log(`${emoji.check} Feature version bumped from ${versionInfo.oldVersion} to ${versionInfo.newVersion}`, 'green');
+
             filesModified.push(jsonFile);
         } else {
             log('');
