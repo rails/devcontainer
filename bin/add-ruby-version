@@ -8,7 +8,7 @@
  * default Ruby version, bumps the feature version, and updates test files.
  *
  * Usage: bin/add-ruby-version <ruby-version>
- * Example: bin/add-ruby-version 3.4.5
+ * Example: bin/add-ruby-version 3.5.0
  *
  * The script will:
  * 1. Validate the version format
@@ -316,7 +316,7 @@ function main() {
 
     if (args.length !== 1) {
         log('Usage: bin/add-ruby-version <ruby-version>', 'red');
-        log('Example: bin/add-ruby-version 3.4.5', 'yellow');
+        log('Example: bin/add-ruby-version 3.5.0', 'yellow');
         process.exit(1);
     }
 
@@ -324,7 +324,7 @@ function main() {
 
     // Validate version format
     if (!validateVersionFormat(newVersion)) {
-        exitWithError('Invalid version format. Expected format: x.y.z (e.g., 3.4.5)');
+        exitWithError('Invalid version format. Expected format: x.y.z (e.g., 3.5.0)');
     }
 
     // Validate configuration
