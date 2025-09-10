@@ -49,7 +49,7 @@ When a new Ruby version is released, we need to add it to the build matrix and p
 Use the automated script to update the configuration files:
 
 ```bash
-bin/add-ruby-version 3.4.5
+bin/add-ruby-version 3.5.0
 ```
 
 This script will:
@@ -71,8 +71,8 @@ You have two options:
 For immediate publishing of specific Ruby versions without cutting a new image version, run the **Publish New Ruby Versions** workflow manually. The workflow takes a list of ruby versions and image tags as inputs, formatted as comma separated arrays:
 
 ```
-ruby_versions: ["3.4.5"]
-image_versions: ["ruby-1.1.0"]
+ruby_versions: ["3.5.0"]
+image_versions: ["ruby-2.0.2"]
 ```
 
 #### Option B: Wait for next image release (automatic)
