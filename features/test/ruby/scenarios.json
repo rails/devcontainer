@@ -1,6 +1,6 @@
 {
   "version_3_3_0": {
-    "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+    "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
     "features": {
       "ruby": {
         "version": "3.3.0"
@@ -8,7 +8,7 @@
     }
   },
   "with_rbenv": {
-    "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+    "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
     "features": {
       "ruby": {
         "versionManager": "rbenv"

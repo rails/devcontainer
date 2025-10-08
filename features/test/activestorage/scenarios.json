@@ -1,6 +1,6 @@
 {
   "image_processor_imagemagick": {
-      "image": "mcr.microsoft.com/devcontainers/base:1-bookworm",
+      "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
       "features": {
           "activestorage": {
             "variantProcessor": "mini_magick"
