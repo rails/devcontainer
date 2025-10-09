@@ -8,7 +8,7 @@
     "@devcontainers/cli": "^0.56.0"
   },
   "scripts": {
-    "test": "devcontainer features test features"
+    "test": "devcontainer features test features -i ubuntu:noble"
   },
   "private": true
 }
