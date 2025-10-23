@@ -373,13 +373,19 @@ function main() {
             log('Default version remains unchanged');
         }
 
-        // Update test files
+        // Update test files only if new version is newer than current default
         log('');
-        log(`${emoji.edit} Updating test files...`, 'blue');
-        for (const testFile of TEST_FILES) {
-            updateVersionInTestFile(newVersion, testFile);
-            log(`${emoji.check} Updated ${testFile}`, 'green');
-            filesModified.push(testFile);
+        let testFilesUpdated = 0;
+        if (comparisonResult > 0) {
+            log(`${emoji.edit} Updating test files...`, 'blue');
+            for (const testFile of TEST_FILES) {
+                updateVersionInTestFile(newVersion, testFile);
+                log(`${emoji.check} Updated ${testFile}`, 'green');
+                filesModified.push(testFile);
+                testFilesUpdated++;
+            }
+        } else {
+            log(`${emoji.info} Skipping test file updates (new version ${newVersion} is not newer than current default ${currentDefault})`, 'cyan');
         }
 
         // Success message
@@ -390,6 +396,7 @@ function main() {
         filesModified.forEach(file => {
             log(`  • ${file}`);
         });
+
         log('');
         log(`${emoji.bulb} Next steps:`, 'magenta');
         log(`  1. Review the changes: git diff`);
