@@ -15,8 +15,9 @@
  * 2. Check if the version already exists
  * 3. Add the version to the workflow matrix
  * 4. Update the default version if the new version is newer
- * 5. Bump the feature version when the default changes
- * 6. Update test files to use the new version
+ * 5. Update the README.md default version
+ * 6. Bump the feature version when the default changes
+ * 7. Update test files to use the new version
  *
  * @author Rails Team
  * @version 1.0.0
@@ -45,6 +46,7 @@ const VERSION_REPLACEMENT_REGEX = new RegExp(`(${VERSION_PATTERN})`, 'g');
 // File paths
 const YAML_FILE = '.github/workflows/publish-new-image-version.yaml';
 const JSON_FILE = 'features/src/ruby/devcontainer-feature.json';
+const README_FILE = 'features/src/ruby/README.md';
 const TEST_FILES = [
     'features/test/ruby/test.sh',
     'features/test/ruby/with_rbenv.sh'
@@ -182,6 +184,28 @@ function updateVersionInTestFile(newVersion, testFile) {
     }
 }
 
+/**
+ * Updates the default version in the README.md file
+ * @param {string} newVersion - The new default version
+ * @param {string} readmeFile - Path to the README.md file
+ * @returns {boolean} Success status
+ */
+function updateReadmeDefaultVersion(newVersion, readmeFile) {
+    try {
+        const content = fs.readFileSync(readmeFile, 'utf8');
+
+        // Update the default value in the options table
+        // Look for the pattern: | version | ... | string | X.Y.Z |
+        const readmeVersionRegex = /(\| version \| [^|]+ \| string \| )(\d+\.\d+\.\d+)( \|)/;
+        const updatedContent = content.replace(readmeVersionRegex, `$1${newVersion}$3`);
+
+        fs.writeFileSync(readmeFile, updatedContent);
+        return true;
+    } catch (error) {
+        throw new Error(`Could not update README file ${readmeFile}: ${error.message}`);
+    }
+}
+
 // === VERSION VALIDATION ===
 /**
  * Validates if a version string matches the expected format
@@ -199,6 +223,7 @@ function validateConfiguration() {
     // Check if files exist
     checkFileExists(YAML_FILE);
     checkFileExists(JSON_FILE);
+    checkFileExists(README_FILE);
 
     // Check if test files exist
     for (const testFile of TEST_FILES) {
@@ -360,13 +385,18 @@ function main() {
             updateDefaultInJson(newVersion, JSON_FILE);
             log(`${emoji.check} Updated default version to ${newVersion}`, 'green');
 
+            // Update README with new default version
+            log(`Updating default version in ${README_FILE}...`);
+            updateReadmeDefaultVersion(newVersion, README_FILE);
+            log(`${emoji.check} Updated README default version to ${newVersion}`, 'green');
+
             // Bump feature version when default changes
             log('');
             log(`${emoji.update} Bumping feature version...`, 'yellow');
             const versionInfo = bumpFeatureVersion(JSON_FILE);
             log(`${emoji.check} Feature version bumped from ${versionInfo.oldVersion} to ${versionInfo.newVersion}`, 'green');
 
-            filesModified.push(JSON_FILE);
+            filesModified.push(JSON_FILE, README_FILE);
         } else {
             log('');
             log(`${emoji.info} New version ${newVersion} is not newer than current default ${currentDefault}`, 'cyan');
