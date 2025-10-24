@@ -8,7 +8,8 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "shopify.ruby-lsp"
+                "shopify.ruby-lsp",
+                "marcoroth.herb-lsp"
             ]
         }
     },

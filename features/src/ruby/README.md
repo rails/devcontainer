@@ -47,7 +47,8 @@ Installs Ruby and a version manager (mise or rbenv) along with the dependencies 
 
 ### VS Code Extensions
 
-- `shopify.ruby-lsp`
+- [`shopify.ruby-lsp`](https://marketplace.visualstudio.com/items?itemName=Shopify.ruby-lsp)
+- [`marcoroth.herb-lsp`](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp)
 
 ## OS Support
 
