@@ -40,7 +40,7 @@ Installs Ruby and a version manager (mise or rbenv) along with the dependencies 
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | The version of ruby to be installed | string | 3.4.7 |
+| version | The version of ruby to be installed | string | 4.0.0 |
 | versionManager | The version manager to use for Ruby (mise or rbenv) | string | mise |
 
 ## Customizations
