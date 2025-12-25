@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create a pull request for new Ruby versions
+# Usage: bin/create-ruby-versions-pr <new_versions_multiline>
+# Output: PR number
+
+# Logging function for stderr
+log() {
+  echo "$@" >&2
+}
+
+# Run command with error handling
+run_or_fail() {
+  local error_msg="$1"
+  shift
+  if ! "$@" >&2; then
+    log "Error: $error_msg"
+    exit 1
+  fi
+}
+
+# Check required tools
+for tool in git gh; do
+  if ! command -v "$tool" &>/dev/null; then
+    log "Error: Required tool '$tool' not found"
+    exit 1
+  fi
+done
+
+NEW_VERSIONS="${1:-}"
+
+if [ -z "$NEW_VERSIONS" ]; then
+  log "Usage: bin/create-ruby-versions-pr <new_versions>"
+  exit 1
+fi
+
+VERSION_COUNT=$(echo "$NEW_VERSIONS" | grep -c .)
+VERSION_LIST=$(echo "$NEW_VERSIONS" | tr '\n' ', ' | sed 's/,$//')
+
+BRANCH_NAME="automated/ruby-versions-$(date +%Y%m%d-%H%M%S)"
+
+git config --local user.name "github-actions[bot]" || log "Warning: Failed to set git user.name"
+git config --local user.email "github-actions[bot]@users.noreply.github.com" || log "Warning: Failed to set git user.email"
+
+log "Creating branch: $BRANCH_NAME"
+run_or_fail "Failed to create branch" git checkout -b "$BRANCH_NAME"
+
+log "Staging changes"
+run_or_fail "Failed to stage changes" git add .
+
+log "Committing changes"
+run_or_fail "Failed to commit changes" git commit -m "Add Ruby versions: $VERSION_LIST [automated-ruby-update]"
+
+log "Pushing to origin"
+run_or_fail "Failed to push to origin" git push origin "$BRANCH_NAME"
+
+PR_BODY="## 🤖 Automated Ruby Version Update
+
+This PR adds $VERSION_COUNT new Ruby version(s) detected from [rbenv/ruby-build](https://github.com/rbenv/ruby-build):
+
+\`\`\`
+$NEW_VERSIONS
+\`\`\`
+
+### Changes Made
+
+- Updated Ruby version matrix in \`.github/workflows/publish-new-image-version.yaml\`
+- Updated default Ruby version in \`features/src/ruby/devcontainer-feature.json\` (if applicable)
+- Updated documentation in \`features/src/ruby/README.md\` (if applicable)
+- Updated test files to use new default version (if applicable)
+- Bumped feature version (if default Ruby version changed)
+
+### Next Steps
+
+After this PR is merged:
+1. Feature will be published automatically if version was bumped
+2. Images will be built and published (requires approval)
+3. GitHub releases will be created
+
+---
+
+*This PR was created automatically by the Ruby version checker workflow.*"
+
+if [ -n "${GITHUB_SERVER_URL:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ] && [ -n "${GITHUB_RUN_ID:-}" ]; then
+  PR_BODY="$PR_BODY
+*Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}*"
+fi
+
+PR_URL=$(gh pr create \
+  --title "Add Ruby versions: $VERSION_LIST" \
+  --body "$PR_BODY" \
+  --label "automation,ruby-versions" \
+  --base main \
+  --head "$BRANCH_NAME")
+
+if [ -z "$PR_URL" ]; then
+  log "Error: Failed to create pull request"
+  exit 1
+fi
+
+# Extract PR number from URL (works with both full URLs and just numbers)
+PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+
+if [ -z "$PR_NUMBER" ]; then
+  log "Error: Could not extract PR number from: $PR_URL"
+  exit 1
+fi
+
+echo "$PR_NUMBER"

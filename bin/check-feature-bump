@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check if the Ruby feature version was bumped in the last commit
+# Usage: bin/check-feature-bump
+# Output: JSON with has_bump, old_version, new_version
+# Exit: 0 if bumped, 1 if not bumped
+
+# Logging function for stderr
+log() {
+  echo "$@" >&2
+}
+
+# Check required tools
+for tool in git jq; do
+  if ! command -v "$tool" &>/dev/null; then
+    log "Error: Required tool '$tool' not found"
+    exit 1
+  fi
+done
+
+FEATURE_FILE="features/src/ruby/devcontainer-feature.json"
+
+# Get versions from HEAD and HEAD~1
+OLD_VERSION=$(git show HEAD~1:"$FEATURE_FILE" 2>/dev/null | jq -r '.version' || echo "")
+NEW_VERSION=$(jq -r '.version' "$FEATURE_FILE")
+
+if [ -z "$OLD_VERSION" ]; then
+  log "Error: Could not get previous version from git"
+  exit 2
+fi
+
+if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+  # Feature was bumped
+  jq -n \
+    --arg has_bump "true" \
+    --arg old "$OLD_VERSION" \
+    --arg new "$NEW_VERSION" \
+    '{has_bump: $has_bump, old_version: $old, new_version: $new}'
+  exit 0
+else
+  # No bump
+  jq -n \
+    --arg has_bump "false" \
+    '{has_bump: $has_bump}'
+  exit 1
+fi

@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check for new Ruby versions and create a PR if found
+# Usage: bin/check-and-create-pr [github_token]
+# Output: PR number if created, empty otherwise
+# Exit: 0 if PR created or no new versions, 1 on error
+
+# Logging function for stderr
+log() {
+  echo "$@" >&2
+}
+
+# Check required tools
+for tool in gh node; do
+  if ! command -v "$tool" &>/dev/null; then
+    log "Error: Required tool '$tool' not found"
+    exit 1
+  fi
+done
+
+GITHUB_TOKEN="${1:-${GITHUB_TOKEN:-}}"
+
+log "Checking for new Ruby versions..."
+NEW_VERSIONS=$(bin/find-new-ruby-versions "$GITHUB_TOKEN")
+
+if [ -z "$NEW_VERSIONS" ]; then
+  log "No new Ruby versions found."
+  exit 0
+fi
+
+log "New versions found:"
+log "$NEW_VERSIONS"
+
+# Check for existing automation PR
+log "Checking for existing automation PRs..."
+EXISTING_PR=$(gh pr list --label "automation,ruby-versions" --state open --json number --jq '.[0].number')
+
+if [ -n "$EXISTING_PR" ]; then
+  log "Found existing PR #$EXISTING_PR, closing it..."
+  gh pr close "$EXISTING_PR" \
+    --comment "Closing this PR as new Ruby versions are available. A new PR will be created."
+fi
+
+# Add new Ruby versions
+log "Adding Ruby versions:"
+while IFS= read -r VERSION; do
+  [ -z "$VERSION" ] && continue
+  log "Adding Ruby $VERSION..."
+  node bin/add-ruby-version "$VERSION" >&2
+done <<< "$NEW_VERSIONS"
+
+# Create pull request
+log "Creating pull request..."
+PR_NUMBER=$(bin/create-ruby-versions-pr "$NEW_VERSIONS")
+
+log "Created PR #$PR_NUMBER"
+echo "$PR_NUMBER"

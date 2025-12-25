@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Get the current/latest image version tag
+# Usage: bin/get-current-image-version
+# Output: The latest ruby-X.Y.Z tag, or feature version if no tags exist
+
+FEATURE_FILE="features/src/ruby/devcontainer-feature.json"
+
+# Get the latest ruby-* tag
+LATEST_TAG=$(git tag --list 'ruby-*.*.*' --sort=-version:refname | head -n 1)
+
+if [ -z "$LATEST_TAG" ]; then
+  # No existing ruby image tags found, use feature version
+  FEATURE_VERSION=$(jq -r '.version' "$FEATURE_FILE")
+  echo "ruby-$FEATURE_VERSION"
+else
+  echo "$LATEST_TAG"
+fi
