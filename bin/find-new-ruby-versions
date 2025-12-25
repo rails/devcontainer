@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Find new Ruby versions by comparing ruby-build with current matrix
+# Usage: bin/find-new-ruby-versions [github_token]
+# Output: New versions not in matrix, one per line, sorted
+
+# Minimum Ruby version (non-EOL)
+MIN_RUBY_VERSION="${MIN_RUBY_VERSION:-3.2.0}"
+
+GITHUB_TOKEN="${1:-${GITHUB_TOKEN:-}}"
+VERSIONS_FILE=".github/ruby-versions.json"
+
+# Set up auth header if token provided
+if [ -n "$GITHUB_TOKEN" ]; then
+  AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
+else
+  AUTH_HEADER=""
+fi
+
+# Get the latest release tag
+LATEST_RELEASE=$(curl -s ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
+  https://api.github.com/repos/rbenv/ruby-build/releases/latest | \
+  jq -r '.tag_name')
+
+# Parse minimum version
+MIN_MAJOR=$(echo "$MIN_RUBY_VERSION" | cut -d. -f1)
+MIN_MINOR=$(echo "$MIN_RUBY_VERSION" | cut -d. -f2)
+
+# Fetch available versions from ruby-build
+AVAILABLE_VERSIONS=$(curl -s ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
+  "https://api.github.com/repos/rbenv/ruby-build/contents/share/ruby-build?ref=$LATEST_RELEASE" | \
+  jq -r '.[].name' | \
+  grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | \
+  awk -F. -v maj="$MIN_MAJOR" -v min="$MIN_MINOR" '$1 > maj || ($1 == maj && $2 >= min)' | \
+  sort -V)
+
+# Extract current versions from JSON file
+CURRENT_VERSIONS=$(jq -r '.[]' "$VERSIONS_FILE" | sort -V)
+
+# Find versions in available but not in current
+comm -23 <(echo "$AVAILABLE_VERSIONS") <(echo "$CURRENT_VERSIONS")

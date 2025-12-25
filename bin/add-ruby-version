@@ -24,7 +24,6 @@
  */
 
 const fs = require('fs');
-const yaml = require('js-yaml');
 const semver = require('semver');
 
 // ANSI color codes for better output
@@ -44,30 +43,13 @@ const VERSION_VALIDATION_REGEX = new RegExp(`^${VERSION_PATTERN}$`);
 const VERSION_REPLACEMENT_REGEX = new RegExp(`(${VERSION_PATTERN})`, 'g');
 
 // File paths
-const YAML_FILE = '.github/workflows/publish-new-image-version.yaml';
+const VERSIONS_JSON_FILE = '.github/ruby-versions.json';
 const JSON_FILE = 'features/src/ruby/devcontainer-feature.json';
 const README_FILE = 'features/src/ruby/README.md';
 const TEST_FILES = [
     'features/test/ruby/test.sh',
     'features/test/ruby/with_rbenv.sh'
 ];
-
-// YAML formatting options
-const YAML_DUMP_OPTIONS = {
-    indent: 2,
-    lineWidth: -1,
-    noRefs: true,
-    sortKeys: false,
-    noArrayIndent: false,
-    skipInvalid: false,
-    flowLevel: -1,
-    styles: {},
-    schema: yaml.DEFAULT_SCHEMA,
-    noCompatMode: false,
-    condenseFlow: false,
-    quotingType: '"',
-    forceQuotes: false
-};
 
 // Emoji helpers
 const emoji = {
@@ -140,34 +122,6 @@ function writeJsonFile(filePath, data) {
 }
 
 /**
- * Reads and parses a YAML file
- * @param {string} filePath - The path to the YAML file
- * @returns {Object} The parsed YAML data
- */
-function readYamlFile(filePath) {
-    try {
-        const content = fs.readFileSync(filePath, 'utf8');
-        return yaml.load(content);
-    } catch (error) {
-        throw new Error(`Could not read YAML file ${filePath}: ${error.message}`);
-    }
-}
-
-/**
- * Writes data to a YAML file with formatting
- * @param {string} filePath - The path to write to
- * @param {Object} data - The data to write
- */
-function writeYamlFile(filePath, data) {
-    try {
-        const content = yaml.dump(data, YAML_DUMP_OPTIONS);
-        fs.writeFileSync(filePath, content);
-    } catch (error) {
-        throw new Error(`Could not write YAML file ${filePath}: ${error.message}`);
-    }
-}
-
-/**
  * Updates version numbers in test files using regex replacement
  * @param {string} newVersion - The new version to replace with
  * @param {string} testFile - The test file to update
@@ -221,7 +175,7 @@ function validateVersionFormat(version) {
  */
 function validateConfiguration() {
     // Check if files exist
-    checkFileExists(YAML_FILE);
+    checkFileExists(VERSIONS_JSON_FILE);
     checkFileExists(JSON_FILE);
     checkFileExists(README_FILE);
 
@@ -248,15 +202,14 @@ function getCurrentDefaultVersion(jsonFile) {
 }
 
 /**
- * Checks if a version already exists in the YAML workflow file
+ * Checks if a version already exists in the versions JSON file
  * @param {string} version - The version to check for
- * @param {string} yamlFile - Path to the YAML workflow file
+ * @param {string} versionsFile - Path to the versions JSON file
  * @returns {boolean} True if version exists, false otherwise
  */
-function versionExistsInYaml(version, yamlFile) {
+function versionExistsInVersionsFile(version, versionsFile) {
     try {
-        const data = readYamlFile(yamlFile);
-        const versions = data.jobs.build.strategy.matrix.RUBY_VERSION || [];
+        const versions = readJsonFile(versionsFile);
         return versions.includes(version);
     } catch (error) {
         throw new Error(`Could not check if version exists: ${error.message}`);
@@ -264,29 +217,27 @@ function versionExistsInYaml(version, yamlFile) {
 }
 
 /**
- * Adds a new Ruby version to the YAML workflow file and sorts the versions
+ * Adds a new Ruby version to the versions JSON file and sorts the versions
  * @param {string} newVersion - The new version to add
- * @param {string} yamlFile - Path to the YAML workflow file
+ * @param {string} versionsFile - Path to the versions JSON file
  * @returns {boolean} Success status
  */
-function addVersionToYaml(newVersion, yamlFile) {
+function addVersionToVersionsFile(newVersion, versionsFile) {
     try {
-        // Read and parse the YAML file
-        const data = readYamlFile(yamlFile);
+        // Read current versions
+        const currentVersions = readJsonFile(versionsFile);
 
-        // Get current versions and add new one
-        const currentVersions = data.jobs.build.strategy.matrix.RUBY_VERSION || [];
+        // Add new version and remove duplicates
         const allVersions = [...new Set([...currentVersions, newVersion])];
+
+        // Sort versions in descending order
         const sortedVersions = allVersions.sort((a, b) => semver.rcompare(a, b));
 
-        // Update the data structure
-        data.jobs.build.strategy.matrix.RUBY_VERSION = sortedVersions;
-
         // Write back to file
-        writeYamlFile(yamlFile, data);
+        writeJsonFile(versionsFile, sortedVersions);
         return true;
     } catch (error) {
-        throw new Error(`Could not update YAML file: ${error.message}`);
+        throw new Error(`Could not update versions file: ${error.message}`);
     }
 }
 
@@ -357,8 +308,8 @@ function main() {
 
     try {
         // Check if version already exists
-        if (versionExistsInYaml(newVersion, YAML_FILE)) {
-            exitWithError(`Version ${newVersion} already exists in ${YAML_FILE}`);
+        if (versionExistsInVersionsFile(newVersion, VERSIONS_JSON_FILE)) {
+            exitWithError(`Version ${newVersion} already exists in ${VERSIONS_JSON_FILE}`);
         }
 
         log(`${emoji.search} Checking current configuration...`, 'cyan');
@@ -368,15 +319,16 @@ function main() {
         log(`Current default version: ${currentDefault}`);
         log(`New version to add: ${newVersion}`);
 
-        // Add version to YAML file
+        // Add version to versions JSON file
         log('');
-        log(`${emoji.edit} Adding ${newVersion} to ${YAML_FILE}...`, 'blue');
-        addVersionToYaml(newVersion, YAML_FILE);
-        log(`${emoji.check} Added to workflow matrix`, 'green');
+        log(`${emoji.edit} Adding ${newVersion} to ${VERSIONS_JSON_FILE}...`, 'blue');
+        addVersionToVersionsFile(newVersion, VERSIONS_JSON_FILE);
+        log(`${emoji.check} Successfully added to ${VERSIONS_JSON_FILE}`, 'green');
+
 
         // Check if new version should become the default
         const comparisonResult = semver.compare(newVersion, currentDefault);
-        const filesModified = [YAML_FILE];
+        const filesModified = [VERSIONS_JSON_FILE];
 
         if (comparisonResult > 0) {
             log('');

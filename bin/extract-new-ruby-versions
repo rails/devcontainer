@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Extract new Ruby versions from git diff
+# Usage: bin/extract-new-ruby-versions [format]
+# format: lines (default) or json
+# Output: New Ruby versions added in the last commit
+
+VERSIONS_FILE=".github/ruby-versions.json"
+FORMAT="${1:-lines}"
+
+# Get old and new versions from JSON
+OLD_VERSIONS=$(git show HEAD~1:"$VERSIONS_FILE" | jq -r '.[]' | sort)
+NEW_VERSIONS=$(cat "$VERSIONS_FILE" | jq -r '.[]' | sort)
+
+# Find versions that are in NEW but not in OLD
+ADDED_VERSIONS=$(comm -13 <(echo "$OLD_VERSIONS") <(echo "$NEW_VERSIONS"))
+
+if [ -z "$ADDED_VERSIONS" ]; then
+  if [ "$FORMAT" = "json" ]; then
+    echo "[]"
+  fi
+  exit 0
+fi
+
+if [ "$FORMAT" = "json" ]; then
+  echo "$ADDED_VERSIONS" | jq -R -s -c 'split("\n") | map(select(length > 0))'
+else
+  echo "$ADDED_VERSIONS"
+fi

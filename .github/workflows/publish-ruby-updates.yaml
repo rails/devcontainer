@@ -1,0 +1,260 @@
+name: Publish Ruby Updates
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect-ruby-update:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[automated-ruby-update]')
+    outputs:
+      has_feature_bump: ${{ steps.check-bump.outputs.has_bump }}
+      old_version: ${{ steps.check-bump.outputs.old_version }}
+      new_version: ${{ steps.check-bump.outputs.new_version }}
+      new_ruby_versions: ${{ steps.extract-versions.outputs.new_versions }}
+      current_image_version: ${{ steps.get-image-version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to compare
+
+      - name: Check for feature version bump
+        id: check-bump
+        run: |
+          if RESULT=$(bin/check-feature-bump); then
+            OLD_VERSION=$(echo "$RESULT" | jq -r '.old_version')
+            NEW_VERSION=$(echo "$RESULT" | jq -r '.new_version')
+            echo "::notice title=Feature Version Bump::Detected feature version bump from $OLD_VERSION to $NEW_VERSION"
+            echo "has_bump=true" >> $GITHUB_OUTPUT
+            echo "old_version=$OLD_VERSION" >> $GITHUB_OUTPUT
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "::notice title=No Feature Bump::No feature version bump detected"
+            echo "has_bump=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract new Ruby versions from diff
+        id: extract-versions
+        run: |
+          echo "Extracting newly added Ruby versions..."
+
+          NEW_VERSIONS_JSON=$(bin/extract-new-ruby-versions json)
+
+          if [ "$NEW_VERSIONS_JSON" = "[]" ]; then
+            echo "::notice title=No New Ruby Versions::No new Ruby versions found in diff"
+            echo "new_versions=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          VERSION_LIST=$(echo "$NEW_VERSIONS_JSON" | jq -r '.[]' | tr '\n' ', ' | sed 's/,$//')
+          echo "::notice title=New Ruby Versions::Adding Ruby versions: $VERSION_LIST"
+
+          echo "new_versions=$NEW_VERSIONS_JSON" >> $GITHUB_OUTPUT
+
+      - name: Get current image version
+        id: get-image-version
+        run: |
+          IMAGE_VERSION=$(bin/get-current-image-version)
+          echo "::notice title=Current Image Version::Current image version is $IMAGE_VERSION"
+          echo "version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+
+  approve-publishing:
+    needs: detect-ruby-update
+    if: needs.detect-ruby-update.outputs.has_feature_bump == 'true' || needs.detect-ruby-update.outputs.new_ruby_versions != ''
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Ready to publish
+        run: |
+          echo "Approval granted. Publishing will proceed automatically."
+          if [ "${{ needs.detect-ruby-update.outputs.has_feature_bump }}" == "true" ]; then
+            echo "- Will publish Ruby feature version ${{ needs.detect-ruby-update.outputs.new_version }}"
+            echo "- Will create image tag ruby-${{ needs.detect-ruby-update.outputs.new_version }}"
+          fi
+          if [ -n "${{ needs.detect-ruby-update.outputs.new_ruby_versions }}" ]; then
+            echo "- Will build images for new Ruby versions: ${{ needs.detect-ruby-update.outputs.new_ruby_versions }}"
+          fi
+
+  publish-feature:
+    needs: [detect-ruby-update, approve-publishing]
+    if: needs.detect-ruby-update.outputs.has_feature_bump == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+    outputs:
+      feature_tag: ${{ steps.get-tag.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Temporarily isolate Ruby feature
+        run: |
+          mkdir -p /tmp/features-publish/src
+          cp -r features/src/ruby /tmp/features-publish/src/
+
+      - name: Publish Ruby feature
+        run: |
+          echo "::notice title=Publishing Feature::Publishing Ruby feature version ${{ needs.detect-ruby-update.outputs.new_version }} to ghcr.io/rails/devcontainer/features/ruby"
+
+      - name: Run devcontainers publish action
+        uses: devcontainers/action@v1
+        with:
+          publish-features: "true"
+          generate-docs: "true"
+          base-path-to-features: "/tmp/features-publish/src"
+          features-namespace: "rails/devcontainer/features"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for feature tag creation
+        id: get-tag
+        run: |
+          VERSION="${{ needs.detect-ruby-update.outputs.new_version }}"
+          EXPECTED_TAG="feature_ruby_${VERSION}"
+
+          echo "Waiting for tag: $EXPECTED_TAG"
+
+          # Wait up to 60 seconds for the tag to be created
+          for i in {1..12}; do
+            if git ls-remote --tags origin | grep -q "refs/tags/$EXPECTED_TAG"; then
+              echo "Tag $EXPECTED_TAG found!"
+              echo "tag=$EXPECTED_TAG" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "Waiting for tag... (attempt $i/12)"
+            sleep 5
+          done
+
+          echo "Warning: Tag $EXPECTED_TAG not found after 60 seconds"
+          echo "tag=$EXPECTED_TAG" >> $GITHUB_OUTPUT
+
+  create-feature-release:
+    needs: [detect-ruby-update, publish-feature]
+    if: needs.detect-ruby-update.outputs.has_feature_bump == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release for feature
+        env:
+          GH_TOKEN: ${{ secrets.RUBY_AUTOMATION_PAT }}
+        run: |
+          TAG="${{ needs.publish-feature.outputs.feature_tag }}"
+          VERSION="${{ needs.detect-ruby-update.outputs.new_version }}"
+
+          echo "::notice title=Creating Feature Release::Creating GitHub release for feature tag $TAG"
+
+          gh release create "$TAG" \
+            --title "Ruby Feature $VERSION" \
+            --generate-notes \
+            --notes "Published Ruby devcontainer feature version $VERSION to \`ghcr.io/rails/devcontainer/features/ruby:$VERSION\`" \
+            || echo "Release may already exist or tag not found yet"
+
+  publish-full-image:
+    needs: [detect-ruby-update, publish-feature, create-feature-release]
+    if: needs.detect-ruby-update.outputs.has_feature_bump == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      image_tag: ${{ steps.create-release.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create image release and tag
+        id: create-release
+        env:
+          GH_TOKEN: ${{ secrets.RUBY_AUTOMATION_PAT }}
+        run: |
+          VERSION="${{ needs.detect-ruby-update.outputs.new_version }}"
+          IMAGE_TAG="ruby-${VERSION}"
+
+          echo "::notice title=Creating Image Release::Creating image release and tag $IMAGE_TAG (will trigger builds for all Ruby versions)"
+
+          gh release create "$IMAGE_TAG" \
+            --title "Ruby Image $VERSION" \
+            --generate-notes \
+            --notes "Published Ruby devcontainer images for all supported Ruby versions with feature version $VERSION.
+
+            Images are available at \`ghcr.io/rails/devcontainer/images/ruby\` with tags like \`$VERSION-3.3.0\`, \`$VERSION-3.4.0\`, etc." \
+            --target main
+
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Release and tag created. The publish-new-image-version workflow will be triggered automatically."
+
+  publish-new-ruby-versions:
+    needs: [detect-ruby-update, approve-publishing]
+    if: needs.detect-ruby-update.outputs.has_feature_bump == 'false' && needs.detect-ruby-update.outputs.new_ruby_versions != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger publish new Ruby versions workflow
+        env:
+          GH_TOKEN: ${{ secrets.RUBY_AUTOMATION_PAT }}
+        run: |
+          NEW_VERSIONS='${{ needs.detect-ruby-update.outputs.new_ruby_versions }}'
+          IMAGE_VERSION='["${{ needs.detect-ruby-update.outputs.current_image_version }}"]'
+
+          VERSION_LIST=$(echo "$NEW_VERSIONS" | jq -r '.[]' | tr '\n' ', ' | sed 's/,$//')
+          echo "::notice title=Triggering Image Builds::Building images for new Ruby versions ($VERSION_LIST) with feature version ${{ needs.detect-ruby-update.outputs.current_image_version }}"
+
+          gh workflow run publish-new-ruby-versions.yaml \
+            -f ruby_versions="$NEW_VERSIONS" \
+            -f image_versions="$IMAGE_VERSION"
+
+          echo "Workflow triggered successfully!"
+
+  notify-failure:
+    needs: [detect-ruby-update, approve-publishing, publish-feature, create-feature-release, publish-full-image, publish-new-ruby-versions]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create issue on failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = {
+              'detect-ruby-update': '${{ needs.detect-ruby-update.result }}',
+              'approve-publishing': '${{ needs.approve-publishing.result }}',
+              'publish-feature': '${{ needs.publish-feature.result }}',
+              'create-feature-release': '${{ needs.create-feature-release.result }}',
+              'publish-full-image': '${{ needs.publish-full-image.result }}',
+              'publish-new-ruby-versions': '${{ needs.publish-new-ruby-versions.result }}'
+            };
+
+            const failedJobs = Object.entries(jobs)
+              .filter(([_, result]) => result === 'failure')
+              .map(([name, _]) => name);
+
+            const body = `The automated Ruby publishing workflow failed.
+
+            **Failed Jobs:** ${failedJobs.join(', ') || 'Unknown'}
+
+            **Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+
+            **Commit:** ${context.sha.substring(0, 7)} - ${context.payload.head_commit.message.split('\n')[0]}
+
+            Please check the workflow logs for details and retry manually if needed.`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔴 Ruby Publishing Workflow Failed',
+              body: body,
+              labels: ['automation', 'bug', 'ruby-versions']
+            });
