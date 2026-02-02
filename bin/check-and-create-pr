@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Check for new Ruby versions and create a PR if found
+#
+# Usage:
+#   bin/check-and-create-pr [options]
+#
+# Options:
+#   --dry-run    Check for versions but don't create a PR
+#   --help       Show this help message
+#
+# Environment variables:
+#   GITHUB_TOKEN - GitHub token for API requests (optional, but recommended)
+#
+# Exit codes:
+#   0 - Success (PR created or no new versions)
+#   1 - Error occurred
+
+require_relative "../lib/commands/check_and_create_pr"
+
+def print_help
+  puts <<~HELP
+    Check for new Ruby versions and create a PR if found
+
+    Usage:
+      bin/check-and-create-pr [options]
+
+    Options:
+      --dry-run    Check for versions but don't create a PR
+      --help       Show this help message
+
+    Environment variables:
+      GITHUB_TOKEN - GitHub token for API requests (optional, but recommended)
+
+    Examples:
+      bin/check-and-create-pr                    # Check and create PR
+      bin/check-and-create-pr --dry-run          # Check only, don't create PR
+      GITHUB_TOKEN=xxx bin/check-and-create-pr   # Use specific token
+  HELP
+end
+
+# Parse arguments
+dry_run = false
+ARGV.each do |arg|
+  case arg
+  when "--dry-run"
+    dry_run = true
+  when "--help", "-h"
+    print_help
+    exit 0
+  else
+    warn "Unknown option: #{arg}"
+    print_help
+    exit 1
+  end
+end
+
+# Run the check and create PR
+# Use stderr for log messages so stdout only contains the PR number (for CI capture)
+result = Commands::CheckAndCreatePR.call(
+  working_dir: Dir.pwd,
+  output: $stderr,
+  dry_run: dry_run
+)
+
+# Output PR number to stdout if created (for use in CI)
+if result[:pr_created] && result[:pr_number]
+  puts result[:pr_number]
+end
+
+exit(result[:success] ? 0 : 1)

@@ -3,4 +3,7 @@
 source "https://rubygems.org"
 
 gem "minitest"
+gem "mocha"
+gem "octokit"
 gem "rake"
+gem "webmock"
