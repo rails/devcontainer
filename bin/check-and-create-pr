@@ -17,6 +17,7 @@
 #   0 - Success (PR created or no new versions)
 #   1 - Error occurred
 
+require "bundler/setup"
 require_relative "../lib/commands/check_and_create_pr"
 
 def print_help
