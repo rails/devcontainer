@@ -91,6 +91,9 @@ class AddRubyVersionTest < Minitest::Test
     assert_includes versions, "3.4.0", "New version should be added to JSON"
     assert_includes versions, "3.3.0", "Existing versions should be preserved"
     assert_includes versions, "3.2.0", "Existing versions should be preserved"
+
+    content = File.read(File.join(@temp_dir, ".github/ruby-versions.json"))
+    assert_match(/^    "3\.4\.0"/, content, "Should use 4-space indentation")
   end
 
   def test_sorts_versions_descending
@@ -173,6 +176,9 @@ class AddRubyVersionTest < Minitest::Test
     feature = read_feature_json
     assert_equal "2.0.1", feature["version"],
       "Feature version should be bumped when default changes"
+
+    content = File.read(File.join(@temp_dir, "features/src/ruby/devcontainer-feature.json"))
+    assert_match(/^    "id"/, content, "Should use 4-space indentation")
   end
 
   def test_does_not_bump_feature_version_when_default_unchanged
