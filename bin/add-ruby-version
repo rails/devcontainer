@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative "../lib/add_ruby_version"
+require_relative "../lib/commands/add_ruby_version"
 
 if ARGV.length != 1
   warn "Usage: bin/add-ruby-version <ruby-version>"
@@ -9,5 +9,5 @@ if ARGV.length != 1
   exit 1
 end
 
-result = AddRubyVersion.call(ARGV[0], working_dir: Dir.pwd)
+result = Commands::AddRubyVersion.call(ARGV[0], working_dir: Dir.pwd)
 exit(result[:success] ? 0 : 1)
