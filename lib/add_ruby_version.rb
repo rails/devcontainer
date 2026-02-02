@@ -180,7 +180,8 @@ module AddRubyVersion
     end
 
     def write_json(relative_path, data)
-      File.write(path_for(relative_path), JSON.pretty_generate(data) + "\n")
+      json = JSON.pretty_generate(data, indent: "    ")
+      File.write(path_for(relative_path), json + "\n")
     end
 
     def current_default_version
