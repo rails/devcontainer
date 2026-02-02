@@ -5,6 +5,8 @@ require "minitest/autorun"
 require "fileutils"
 require "json"
 require "tempfile"
+require "stringio"
+require_relative "../lib/add_ruby_version"
 
 # Test suite for the add-ruby-version script
 #
@@ -14,9 +16,6 @@ require "tempfile"
 # Run with: ruby test/add_ruby_version_test.rb
 # Or:       bundle exec ruby test/add_ruby_version_test.rb
 class AddRubyVersionTest < Minitest::Test
-  PROJECT_ROOT = File.expand_path("..", __dir__)
-  SCRIPT_PATH = File.join(PROJECT_ROOT, "bin/add-ruby-version")
-
   def setup
     @temp_dir = Dir.mktmpdir("add-ruby-version-test")
 
@@ -24,7 +23,6 @@ class AddRubyVersionTest < Minitest::Test
     FileUtils.mkdir_p(File.join(@temp_dir, ".github"))
     FileUtils.mkdir_p(File.join(@temp_dir, "features/src/ruby"))
     FileUtils.mkdir_p(File.join(@temp_dir, "features/test/ruby"))
-    FileUtils.mkdir_p(File.join(@temp_dir, "bin"))
   end
 
   def teardown
@@ -284,21 +282,6 @@ class AddRubyVersionTest < Minitest::Test
     assert_match(/not found/i, result[:output])
   end
 
-  def test_requires_version_argument
-    setup_valid_environment
-    result = run_script
-
-    refute result[:success], "Should fail without version argument"
-    assert_match(/usage/i, result[:output])
-  end
-
-  def test_rejects_multiple_arguments
-    setup_valid_environment
-    result = run_script("3.4.0", "3.5.0")
-
-    refute result[:success], "Should fail with multiple arguments"
-  end
-
   def test_handles_empty_versions_array
     setup_valid_environment(versions: [])
     result = run_script("3.4.0")
@@ -392,11 +375,10 @@ class AddRubyVersionTest < Minitest::Test
     File.read(File.join(@temp_dir, "features/test/ruby/#{filename}"))
   end
 
-  def run_script(*args)
-    # Run from project root to have access to node_modules, but operate on temp dir files
-    cmd = "cd #{@temp_dir} && node #{SCRIPT_PATH} #{args.join(" ")} 2>&1"
-    output = `#{cmd}`
-    { output: output, success: $?.success?, exit_code: $?.exitstatus }
+  def run_script(version)
+    output = StringIO.new
+    result = AddRubyVersion.call(version, working_dir: @temp_dir, output: output)
+    { output: output.string, success: result[:success] }
   end
 
   def setup_valid_environment(versions: ["3.3.0", "3.2.0"], default_ruby: "3.3.0", feature_version: "2.0.0")
