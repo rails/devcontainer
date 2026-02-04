@@ -27,27 +27,38 @@ jobs:
         id: check-and-create
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_NUMBER=$(bin/check-and-create-pr)
+        run: bin/check-and-create-pr
 
-          if [ -n "$PR_NUMBER" ]; then
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          fi
+      - name: Annotate new versions added
+        if: steps.check-and-create.outputs.pr_created == 'true'
+        run: |
+          echo "::notice title=✨ New Ruby Versions Added::Added Ruby version(s): ${{ steps.check-and-create.outputs.new_versions }}. PR: ${{ steps.check-and-create.outputs.pr_url }}"
+
+      - name: Annotate no new versions
+        if: steps.check-and-create.outputs.pr_created == 'false' && steps.check-and-create.outputs.new_versions == ''
+        run: |
+          echo "::notice title=ℹ️ No New Ruby Versions::All Ruby versions are up to date. No new versions were found."
 
       - name: Enable auto-merge
-        if: steps.check-and-create.outputs.pr_number != ''
+        if: steps.check-and-create.outputs.pr_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Enabling auto-merge for PR #${{ steps.check-and-create.outputs.pr_number }}..."
           gh pr merge ${{ steps.check-and-create.outputs.pr_number }} --auto --squash
 
+      - name: Annotate failure
+        if: failure()
+        run: |
+          echo "::error title=❌ Ruby Version Check Failed::The automated Ruby version check failed. Error: ${{ steps.check-and-create.outputs.error }}. See workflow run for details."
+
       - name: Create issue on failure
         if: failure()
+        id: create-issue
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.create({
+            const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: '🔴 Ruby Version Check Failed',
@@ -60,3 +71,10 @@ jobs:
               Please check the workflow logs for details.`,
               labels: ['automation', 'bug', 'ruby-versions']
             });
+            core.setOutput('issue_number', issue.data.number);
+            core.setOutput('issue_url', issue.data.html_url);
+
+      - name: Annotate issue created
+        if: failure() && steps.create-issue.outputs.issue_url
+        run: |
+          echo "::error title=🔴 Issue Created::An issue has been created to track this failure: ${{ steps.create-issue.outputs.issue_url }}"

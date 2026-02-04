@@ -65,6 +65,17 @@ result = Commands::CheckAndCreatePR.call(
   dry_run: dry_run
 )
 
+# Output results for CI (GitHub Actions outputs)
+if ENV["GITHUB_OUTPUT"]
+  File.open(ENV["GITHUB_OUTPUT"], "a") do |f|
+    f.puts "new_versions=#{(result[:new_versions] || []).join(',')}"
+    f.puts "pr_number=#{result[:pr_number]}" if result[:pr_number]
+    f.puts "pr_url=#{result[:pr_url]}" if result[:pr_url]
+    f.puts "pr_created=#{result[:pr_created] || false}"
+    f.puts "error=#{result[:error]}" if result[:error]
+  end
+end
+
 # Output PR number to stdout if created (for use in CI)
 if result[:pr_created] && result[:pr_number]
   puts result[:pr_number]
