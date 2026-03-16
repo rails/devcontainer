@@ -19,7 +19,7 @@
     "options": {
         "version": {
             "type": "string",
-            "default": "4.0.1",
+            "default": "4.0.2",
             "description": "The ruby version to be installed"
         },
         "versionManager": {
