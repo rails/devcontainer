@@ -17,7 +17,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout (GitHub)
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ inputs.image_tag }}
 
@@ -53,4 +53,4 @@ runs:
         platform: linux/amd64,linux/arm64
 
     - name: Checkout (GitHub)
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6

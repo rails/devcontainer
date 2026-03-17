@@ -28,7 +28,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout (GitHub)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build and Publish Image
         uses: ./.github/actions/build-and-publish-image
