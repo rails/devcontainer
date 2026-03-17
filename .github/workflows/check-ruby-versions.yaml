@@ -26,7 +26,7 @@ jobs:
       - name: Check for new versions and create PR
         id: check-and-create
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RUBY_AUTOMATION_PAT }}
         run: bin/check-and-create-pr
 
       - name: Annotate new versions added
@@ -42,7 +42,7 @@ jobs:
       - name: Enable auto-merge
         if: steps.check-and-create.outputs.pr_created == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RUBY_AUTOMATION_PAT }}
         run: |
           echo "Enabling auto-merge for PR #${{ steps.check-and-create.outputs.pr_number }}..."
           gh pr merge ${{ steps.check-and-create.outputs.pr_number }} --auto --squash

@@ -162,8 +162,8 @@ class RubyVersionPRCreatorTest < Minitest::Test
   end
 
   def stub_github_api_success
-    stub_request(:get, "https://api.github.com/user")
-      .to_return(status: 200, body: JSON.generate({ login: "test-user" }), headers: json_headers)
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer")
+      .to_return(status: 200, body: JSON.generate({ full_name: "rails/devcontainer" }), headers: json_headers)
 
     stub_request(:get, "https://api.github.com/repos/rails/devcontainer/pulls?state=open")
       .to_return(status: 200, body: JSON.generate([]), headers: json_headers)
@@ -180,12 +180,12 @@ class RubyVersionPRCreatorTest < Minitest::Test
   end
 
   def stub_github_api_unauthorized
-    stub_request(:get, "https://api.github.com/user").to_return(status: 401)
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer").to_return(status: 401)
   end
 
   def stub_github_api_with_existing_pr
-    stub_request(:get, "https://api.github.com/user")
-      .to_return(status: 200, body: JSON.generate({ login: "test-user" }), headers: json_headers)
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer")
+      .to_return(status: 200, body: JSON.generate({ full_name: "rails/devcontainer" }), headers: json_headers)
 
     stub_request(:get, "https://api.github.com/repos/rails/devcontainer/pulls?state=open")
       .to_return(

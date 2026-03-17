@@ -115,11 +115,15 @@ class RubyVersionPRCreator
       raise Error, "Git is not installed or not in PATH."
     end
 
-    # Verify we can authenticate with GitHub
+    # Verify we can authenticate with GitHub and access this repository
     begin
-      github_client.user
+      github_client.repository(repository)
     rescue Octokit::Unauthorized
       raise Error, "GitHub API authentication failed. Check your token."
+    rescue Octokit::Forbidden
+      raise Error, "GitHub API access forbidden for repository #{repository}. Check token permissions."
+    rescue Octokit::NotFound
+      raise Error, "GitHub repository not found or inaccessible: #{repository}."
     rescue Octokit::Error => e
       raise Error, "GitHub API error: #{e.message}"
     end
