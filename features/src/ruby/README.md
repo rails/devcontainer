@@ -36,12 +36,27 @@ Installs Ruby and a version manager (mise or rbenv) along with the dependencies 
 }
 ```
 
+### Opting in to precompiled Rubies with mise
+
+```json
+"features": {
+    "ghcr.io/rails/devcontainer/features/ruby:1": {
+        "version": "3.3.0",
+        "versionManager": "mise",
+        "usePrecompiledRubies": true
+    }
+}
+```
+
+When using `mise`, this feature keeps `ruby.compile=true` by default so Ruby is compiled from source. Set `usePrecompiledRubies` to `true` to make mise prefer precompiled Rubies when they are available.
+
 ## Options
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
 | version | The version of ruby to be installed | string | 4.0.2 |
 | versionManager | The version manager to use for Ruby (mise or rbenv) | string | mise |
+| usePrecompiledRubies | Use precompiled Rubies with mise when available | boolean | false |
 
 ## Customizations
 

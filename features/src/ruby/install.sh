@@ -3,6 +3,7 @@ set -e
 
 USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
 VERSION_MANAGER="${VERSIONMANAGER:-"mise"}"
+USE_PRECOMPILED_RUBIES="${USEPRECOMPILEDRUBIES:-"false"}"
 
 # Function to install dependencies needed for building Ruby
 install_dependencies() {
@@ -83,8 +84,20 @@ install_ruby_rbenv() {
 # Function to setup mise
 setup_mise() {
     _user="$1"
+    _use_precompiled_rubies="$2"
+
+    if [ "$_user" = "root" ]; then
+        _home_dir="/root"
+    else
+        _home_dir="/home/$_user"
+    fi
 
     su "$_user" -c "curl https://mise.run | sh"
+    if [ "$_use_precompiled_rubies" = "true" ]; then
+        su "$_user" -c "$_home_dir/.local/bin/mise settings ruby.compile=false"
+    else
+        su "$_user" -c "$_home_dir/.local/bin/mise settings ruby.compile=true"
+    fi
 
     # shellcheck disable=SC2016
     add_to_shell_init "$_user" 'eval "$(~/.local/bin/mise activate bash)"' 'eval "$(~/.local/bin/mise activate zsh)"'
@@ -113,7 +126,7 @@ if [ "$VERSION_MANAGER" = "rbenv" ]; then
     setup_rbenv "$USERNAME"
     install_ruby_rbenv "$USERNAME" "$VERSION"
 else
-    setup_mise "$USERNAME"
+    setup_mise "$USERNAME" "$USE_PRECOMPILED_RUBIES"
     install_ruby_mise "$USERNAME" "$VERSION"
 fi
 
