@@ -3,6 +3,8 @@
 require "octokit"
 require "open3"
 require "time"
+require "base64"
+require "json"
 require_relative "console"
 
 # Ruby Version PR Creator
@@ -48,7 +50,15 @@ class RubyVersionPRCreator
   def call
     validate_prerequisites!
 
-    close_existing_automation_prs
+    existing_pr = close_existing_automation_prs
+
+    if existing_pr
+      log("", :blue)
+      log("Reusing existing automation PR ##{existing_pr.number}", :blue, emoji: :info)
+      log("URL: #{existing_pr.html_url}", emoji: :info)
+
+      return { success: true, pr_number: existing_pr.number, pr_url: existing_pr.html_url }
+    end
 
     branch_name = create_branch
     commit_changes
@@ -148,7 +158,15 @@ class RubyVersionPRCreator
         labels.include?("automation") && labels.include?("ruby-versions")
       end
 
-      automation_prs.each do |pr|
+      matching_pr = automation_prs.find { |pr| automation_pr_matches_versions?(pr) }
+
+      if matching_pr
+        log("Found matching automation PR ##{matching_pr.number}; keeping it open.", :blue, emoji: :info)
+      end
+
+      prs_to_close = matching_pr ? (automation_prs - [matching_pr]) : automation_prs
+
+      prs_to_close.each do |pr|
         log("Closing existing PR ##{pr.number}...", :yellow, emoji: :close)
         github_client.add_comment(
           repository,
@@ -157,9 +175,38 @@ class RubyVersionPRCreator
         )
         github_client.close_pull_request(repository, pr.number)
       end
+
+      matching_pr
     rescue Octokit::Error => e
       # Non-fatal, just log and continue
       log("Could not check for existing PRs: #{e.message}", :yellow, emoji: :info)
+      nil
+    end
+  end
+
+  def automation_pr_matches_versions?(pr)
+    versions = ruby_versions_from_pr(pr)
+    new_versions.all? { |version| versions.include?(version) }
+  rescue Octokit::Error => e
+    log("Could not inspect PR ##{pr.number} versions: #{e.message}", :yellow, emoji: :info)
+    false
+  rescue ArgumentError, JSON::ParserError => e
+    log("Invalid versions file in PR ##{pr.number}: #{e.message}", :yellow, emoji: :info)
+    false
+  end
+
+  def ruby_versions_from_pr(pr)
+    file = github_client.contents(repository, path: ".github/ruby-versions.json", ref: pr.head.ref)
+    encoded_content = file.content.to_s.strip
+
+    return [] if encoded_content.empty?
+
+    parsed = JSON.parse(Base64.decode64(encoded_content))
+
+    if parsed.is_a?(Array)
+      return parsed
+    else
+      raise ArgumentError, "Expected .github/ruby-versions.json to contain an array"
     end
   end
 

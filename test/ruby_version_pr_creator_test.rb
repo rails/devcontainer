@@ -6,6 +6,7 @@ require "mocha/minitest"
 require "json"
 require "stringio"
 require "webmock/minitest"
+require "base64"
 require_relative "../lib/ruby_version_pr_creator"
 
 # Test suite for the RubyVersionPRCreator module
@@ -77,6 +78,34 @@ class RubyVersionPRCreatorTest < Minitest::Test
 
     assert result[:success]
     assert_match(/closing existing pr/i, @output.string)
+  end
+
+  def test_reuses_existing_matching_automation_pr
+    stub_github_api_with_matching_existing_pr
+    creator = create_creator(["3.4.0"], [".github/ruby-versions.json"])
+    stub_git_operations(creator)
+
+    result = creator.call
+
+    assert result[:success]
+    assert_equal 100, result[:pr_number]
+    assert_equal "https://github.com/rails/devcontainer/pull/100", result[:pr_url]
+    assert_match(/reusing existing automation pr/i, @output.string)
+    assert_not_requested(:post, "https://api.github.com/repos/rails/devcontainer/pulls")
+    assert_not_requested(:patch, "https://api.github.com/repos/rails/devcontainer/pulls/100")
+  end
+
+  def test_handles_empty_versions_file_content_as_non_matching
+    stub_github_api_with_empty_versions_file_pr
+    creator = create_creator(["3.4.0"], [".github/ruby-versions.json"])
+    stub_git_operations(creator)
+
+    result = creator.call
+
+    assert result[:success]
+    assert_equal 123, result[:pr_number]
+    assert_requested(:patch, "https://api.github.com/repos/rails/devcontainer/pulls/100")
+    assert_requested(:post, "https://api.github.com/repos/rails/devcontainer/pulls")
   end
 
   def test_generates_correct_pr_title_single_version
@@ -190,7 +219,91 @@ class RubyVersionPRCreatorTest < Minitest::Test
     stub_request(:get, "https://api.github.com/repos/rails/devcontainer/pulls?state=open")
       .to_return(
         status: 200,
-        body: JSON.generate([{ number: 100, labels: [{ name: "automation" }, { name: "ruby-versions" }] }]),
+        body: JSON.generate([
+          {
+            number: 100,
+            title: "Add Ruby version: 3.3.9",
+            head: { ref: "automated/ruby-versions-old" },
+            labels: [{ name: "automation" }, { name: "ruby-versions" }]
+          }
+        ]),
+        headers: json_headers
+      )
+
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer/contents/.github/ruby-versions.json?ref=automated/ruby-versions-old")
+      .to_return(
+        status: 200,
+        body: JSON.generate({ content: Base64.strict_encode64(JSON.generate(["3.3.9", "3.3.8"])) }),
+        headers: json_headers
+      )
+
+    stub_request(:post, "https://api.github.com/repos/rails/devcontainer/issues/100/comments")
+      .to_return(status: 201, body: JSON.generate({ id: 1 }), headers: json_headers)
+
+    stub_request(:patch, "https://api.github.com/repos/rails/devcontainer/pulls/100")
+      .to_return(status: 200, body: JSON.generate({ number: 100, state: "closed" }), headers: json_headers)
+
+    stub_request(:post, "https://api.github.com/repos/rails/devcontainer/pulls")
+      .to_return(
+        status: 201,
+        body: JSON.generate({ number: 123, html_url: "https://github.com/rails/devcontainer/pull/123" }),
+        headers: json_headers
+      )
+
+    stub_request(:post, "https://api.github.com/repos/rails/devcontainer/issues/123/labels")
+      .to_return(status: 200, body: JSON.generate([]), headers: json_headers)
+  end
+
+  def stub_github_api_with_matching_existing_pr
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer")
+      .to_return(status: 200, body: JSON.generate({ full_name: "rails/devcontainer" }), headers: json_headers)
+
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer/pulls?state=open")
+      .to_return(
+        status: 200,
+        body: JSON.generate([
+          {
+            number: 100,
+            title: "Add Ruby version: 3.4.0",
+            body: "Automated Ruby Version Update for 3.4.0",
+            html_url: "https://github.com/rails/devcontainer/pull/100",
+            head: { ref: "automated/ruby-versions-100" },
+            labels: [{ name: "automation" }, { name: "ruby-versions" }]
+          }
+        ]),
+        headers: json_headers
+      )
+
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer/contents/.github/ruby-versions.json?ref=automated/ruby-versions-100")
+      .to_return(
+        status: 200,
+        body: JSON.generate({ content: Base64.strict_encode64(JSON.generate(["3.4.0", "3.3.10"])) }),
+        headers: json_headers
+      )
+  end
+
+  def stub_github_api_with_empty_versions_file_pr
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer")
+      .to_return(status: 200, body: JSON.generate({ full_name: "rails/devcontainer" }), headers: json_headers)
+
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer/pulls?state=open")
+      .to_return(
+        status: 200,
+        body: JSON.generate([
+          {
+            number: 100,
+            title: "Add Ruby version: 3.4.0",
+            head: { ref: "automated/ruby-versions-empty" },
+            labels: [{ name: "automation" }, { name: "ruby-versions" }]
+          }
+        ]),
+        headers: json_headers
+      )
+
+    stub_request(:get, "https://api.github.com/repos/rails/devcontainer/contents/.github/ruby-versions.json?ref=automated/ruby-versions-empty")
+      .to_return(
+        status: 200,
+        body: JSON.generate({ content: "" }),
         headers: json_headers
       )
 
