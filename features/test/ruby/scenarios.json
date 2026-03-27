@@ -3,7 +3,8 @@
     "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
     "features": {
       "ruby": {
-        "version": "3.3.0"
+        "version": "3.3.0",
+        "usePrecompiledRubies": true
       }
     }
   },
@@ -12,6 +13,14 @@
     "features": {
       "ruby": {
         "versionManager": "rbenv"
+      }
+    }
+  },
+  "with_precompiled_rubies": {
+    "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
+    "features": {
+      "ruby": {
+        "usePrecompiledRubies": true
       }
     }
   }
