@@ -75,7 +75,7 @@ class RubyVersionAdderTest < Minitest::Test
   # ==========================================================================
 
   def test_rejects_duplicate_version
-    setup_valid_environment(versions: ["3.3.0", "3.2.0"])
+    setup_valid_environment(versions: ["3.3.0"])
     result = call_service("3.3.0")
 
     refute result[:success], "Should fail when version already exists"
@@ -83,7 +83,7 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_accepts_new_version
-    setup_valid_environment(versions: ["3.3.0", "3.2.0"])
+    setup_valid_environment(versions: ["3.3.0"])
     result = call_service("3.4.0")
 
     assert result[:success], "Should accept new version: #{result[:error]}"
@@ -94,17 +94,16 @@ class RubyVersionAdderTest < Minitest::Test
   # ==========================================================================
 
   def test_adds_version_to_json_file
-    setup_valid_environment(versions: ["3.3.0", "3.2.0"])
+    setup_valid_environment(versions: ["3.3.0"])
     call_service("3.4.0")
 
     versions = read_versions_json
     assert_includes versions, "3.4.0", "New version should be added to JSON"
     assert_includes versions, "3.3.0", "Existing versions should be preserved"
-    assert_includes versions, "3.2.0", "Existing versions should be preserved"
   end
 
   def test_uses_four_space_indentation
-    setup_valid_environment(versions: ["3.3.0", "3.2.0"])
+    setup_valid_environment(versions: ["3.3.0"])
     call_service("3.4.0")
 
     content = File.read(File.join(@temp_dir, ".github/ruby-versions.json"))
@@ -112,11 +111,11 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_sorts_versions_descending
-    setup_valid_environment(versions: ["3.3.0", "3.2.0"])
+    setup_valid_environment(versions: ["3.3.0"])
     call_service("3.4.0")
 
     versions = read_versions_json
-    assert_equal ["3.4.0", "3.3.0", "3.2.0"], versions, "Versions should be sorted descending"
+    assert_equal ["3.4.0", "3.3.0"], versions, "Versions should be sorted descending"
   end
 
   def test_sorts_versions_with_double_digit_patch
@@ -129,11 +128,11 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_adds_older_version_in_correct_position
-    setup_valid_environment(versions: ["3.3.0", "3.1.0"])
-    call_service("3.2.0")
+    setup_valid_environment(versions: ["3.4.0", "3.3.0"])
+    call_service("3.3.5")
 
     versions = read_versions_json
-    assert_equal ["3.3.0", "3.2.0", "3.1.0"], versions,
+    assert_equal ["3.4.0", "3.3.5", "3.3.0"], versions,
       "Older version should be inserted in correct sorted position"
   end
 
@@ -160,11 +159,11 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_does_not_update_default_when_version_is_older
-    setup_valid_environment(versions: ["3.3.0", "3.2.0"], default_ruby: "3.3.0")
-    call_service("3.2.5")
+    setup_valid_environment(versions: ["3.4.0", "3.3.0"], default_ruby: "3.4.0")
+    call_service("3.3.5")
 
     feature = read_feature_json
-    assert_equal "3.3.0", feature["options"]["version"]["default"],
+    assert_equal "3.4.0", feature["options"]["version"]["default"],
       "Default should remain unchanged for older version"
   end
 
@@ -201,12 +200,12 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_returns_default_updated_false_when_default_unchanged
-    setup_valid_environment(versions: ["3.3.0"], default_ruby: "3.3.0")
-    result = call_service("3.2.5")
+    setup_valid_environment(versions: ["3.4.0", "3.3.0"], default_ruby: "3.4.0")
+    result = call_service("3.3.5")
 
     assert result[:success]
     refute result[:default_updated], "Should indicate default was not updated"
-    assert_equal "3.3.0", result[:previous_default]
+    assert_equal "3.4.0", result[:previous_default]
     assert_nil result[:new_default]
   end
 
@@ -242,11 +241,11 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_does_not_update_readme_when_version_is_older
-    setup_valid_environment(default_ruby: "3.3.0")
-    call_service("3.2.5")
+    setup_valid_environment(default_ruby: "3.4.0")
+    call_service("3.3.5")
 
     readme = read_readme
-    assert_match(/\| string \| 3\.3\.0 \|/, readme,
+    assert_match(/\| string \| 3\.4\.0 \|/, readme,
       "README should keep old default version")
   end
 
@@ -264,8 +263,8 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_does_not_bump_feature_version_when_default_unchanged
-    setup_valid_environment(feature_version: "2.0.0", default_ruby: "3.3.0")
-    call_service("3.2.5")
+    setup_valid_environment(feature_version: "2.0.0", default_ruby: "3.4.0")
+    call_service("3.3.5")
 
     feature = read_feature_json
     assert_equal "2.0.0", feature["version"],
@@ -305,12 +304,12 @@ class RubyVersionAdderTest < Minitest::Test
   end
 
   def test_does_not_update_test_files_when_default_unchanged
-    setup_valid_environment(default_ruby: "3.3.0")
-    call_service("3.2.5")
+    setup_valid_environment(default_ruby: "3.4.0")
+    call_service("3.3.5")
 
     test_content = read_test_file("test.sh")
-    assert_match(/3\.3\.0/, test_content, "test.sh should keep old version")
-    refute_match(/3\.2\.5/, test_content, "test.sh should not contain older version")
+    assert_match(/3\.4\.0/, test_content, "test.sh should keep old version")
+    refute_match(/3\.3\.5/, test_content, "test.sh should not contain older version")
   end
 
   # ==========================================================================
@@ -318,8 +317,8 @@ class RubyVersionAdderTest < Minitest::Test
   # ==========================================================================
 
   def test_returns_files_modified_for_older_version
-    setup_valid_environment(versions: ["3.3.0"], default_ruby: "3.3.0")
-    result = call_service("3.2.5")
+    setup_valid_environment(versions: ["3.4.0", "3.3.0"], default_ruby: "3.4.0")
+    result = call_service("3.3.5")
 
     assert result[:success]
     assert_includes result[:files_modified], ".github/ruby-versions.json"
@@ -475,7 +474,7 @@ class RubyVersionAdderTest < Minitest::Test
     File.read(File.join(@temp_dir, "features/test/ruby/#{filename}"))
   end
 
-  def setup_valid_environment(versions: ["3.3.0", "3.2.0"], default_ruby: "3.3.0", feature_version: "2.0.0")
+  def setup_valid_environment(versions: ["3.3.0"], default_ruby: "3.3.0", feature_version: "2.0.0")
     create_versions_json(versions)
     create_feature_json(version: feature_version, default_ruby: default_ruby)
     create_readme(default_version: default_ruby)
