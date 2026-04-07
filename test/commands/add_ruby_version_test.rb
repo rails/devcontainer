@@ -58,8 +58,8 @@ class Commands::AddRubyVersionTest < Minitest::Test
   end
 
   def test_output_indicates_skipped_updates_for_older_version
-    setup_valid_environment(default_ruby: "3.3.0")
-    result = run_command("3.2.5")
+    setup_valid_environment(default_ruby: "3.4.0")
+    result = run_command("3.3.5")
 
     assert_match(/not newer than current default/i, result[:output])
     assert_match(/skipping/i, result[:output])
@@ -198,7 +198,7 @@ class Commands::AddRubyVersionTest < Minitest::Test
     File.write(File.join(@temp_dir, "features/test/ruby/#{filename}"), content)
   end
 
-  def setup_valid_environment(versions: ["3.3.0", "3.2.0"], default_ruby: "3.3.0", feature_version: "2.0.0")
+  def setup_valid_environment(versions: ["3.3.0"], default_ruby: "3.3.0", feature_version: "2.0.0")
     create_versions_json(versions)
     create_feature_json(version: feature_version, default_ruby: default_ruby)
     create_readme(default_version: default_ruby)

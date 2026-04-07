@@ -34,8 +34,8 @@ class RubyVersionCheckerTest < Minitest::Test
   end
 
   def test_check_returns_new_versions
-    setup_versions_file(["3.3.0", "3.2.0"])
-    stub_github_api(available_versions: ["3.4.0", "3.3.0", "3.2.0"])
+    setup_versions_file(["3.3.0"])
+    stub_github_api(available_versions: ["3.4.0", "3.3.0"])
 
     result = RubyVersionChecker.check(
       working_dir: @temp_dir,
@@ -48,8 +48,8 @@ class RubyVersionCheckerTest < Minitest::Test
   end
 
   def test_check_returns_empty_when_up_to_date
-    setup_versions_file(["3.4.0", "3.3.0", "3.2.0"])
-    stub_github_api(available_versions: ["3.4.0", "3.3.0", "3.2.0"])
+    setup_versions_file(["3.4.0", "3.3.0"])
+    stub_github_api(available_versions: ["3.4.0", "3.3.0"])
 
     result = RubyVersionChecker.check(
       working_dir: @temp_dir,
@@ -87,13 +87,13 @@ class RubyVersionCheckerTest < Minitest::Test
     )
 
     assert result[:success]
-    # Only 3.4.0 should be returned (>= 3.2.0 and not already in config)
+    # Only 3.4.0 should be returned (>= 3.3.0 and not already in config)
     assert_equal ["3.4.0"], result[:new_versions]
   end
 
   def test_check_sorts_versions_descending
-    setup_versions_file(["3.2.0"])
-    stub_github_api(available_versions: ["3.3.0", "3.4.0", "3.2.5", "3.2.0"])
+    setup_versions_file(["3.3.0"])
+    stub_github_api(available_versions: ["3.3.5", "3.4.0", "3.3.0"])
 
     result = RubyVersionChecker.check(
       working_dir: @temp_dir,
@@ -102,7 +102,7 @@ class RubyVersionCheckerTest < Minitest::Test
     )
 
     assert result[:success]
-    assert_equal ["3.4.0", "3.3.0", "3.2.5"], result[:new_versions]
+    assert_equal ["3.4.0", "3.3.5"], result[:new_versions]
   end
 
   def test_check_fails_when_versions_file_missing

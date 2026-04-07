@@ -17,7 +17,7 @@ class RubyVersionChecker
   class Error < StandardError; end
 
   # Minimum Ruby version to consider (non-EOL versions only)
-  MIN_RUBY_VERSION = "3.2.0"
+  MIN_RUBY_VERSION = "3.3.0"
 
   # Ruby-build repository
   RUBY_BUILD_REPO = "rbenv/ruby-build"
