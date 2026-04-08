@@ -430,6 +430,11 @@ class RubyVersionAdderTest < Minitest::Test
           "type" => "string",
           "default" => default_ruby,
           "description" => "The ruby version to be installed"
+        },
+        "usePrecompiledRubies" => {
+          "type" => "boolean",
+          "default" => false,
+          "description" => "Use precompiled Rubies with mise when available"
         }
       }
     }
@@ -452,6 +457,7 @@ class RubyVersionAdderTest < Minitest::Test
       |-----|-----|-----|-----|
       | version | The version of ruby to be installed | string | #{default_version} |
       | versionManager | The version manager to use | string | mise |
+      | usePrecompiledRubies | Use precompiled Rubies with mise when available | boolean | false |
     README
     File.write(File.join(@temp_dir, "features/src/ruby/README.md"), content)
   end

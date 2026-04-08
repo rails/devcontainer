@@ -1,11 +1,9 @@
 {
-  "name": "ruby-version-script",
+  "name": "rails-devcontainer-features",
   "version": "1.0.0",
-  "description": "Script dependencies for adding Ruby versions",
+  "description": "Rails DevContainer features and images",
   "devDependencies": {
-    "js-yaml": "^4.1.0",
-    "semver": "^7.5.4",
-    "@devcontainers/cli": "^0.56.0"
+    "@devcontainers/cli": ">= 0.84"
   },
   "scripts": {
     "test": "devcontainer features test features -i ubuntu:noble"
