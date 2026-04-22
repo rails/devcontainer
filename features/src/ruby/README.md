@@ -54,7 +54,7 @@ When using `mise`, this feature keeps `ruby.compile=true` by default so Ruby is 
 
 | Options Id | Description | Type | Default Value |
 |-----|-----|-----|-----|
-| version | The version of ruby to be installed | string | 4.0.2 |
+| version | The version of ruby to be installed | string | 4.0.3 |
 | versionManager | The version manager to use for Ruby (mise or rbenv) | string | mise |
 | usePrecompiledRubies | Use precompiled Rubies with mise when available | boolean | false |
 
