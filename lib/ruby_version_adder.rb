@@ -21,7 +21,8 @@ class RubyVersionAdder
   README_FILE = "features/src/ruby/README.md"
   TEST_FILES = [
     "features/test/ruby/test.sh",
-    "features/test/ruby/with_rbenv.sh"
+    "features/test/ruby/with_rbenv.sh",
+    "features/test/ruby/with_precompiled_rubies.sh"
   ].freeze
 
   # Version format pattern

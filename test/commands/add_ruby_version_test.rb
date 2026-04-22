@@ -210,5 +210,6 @@ class Commands::AddRubyVersionTest < Minitest::Test
     create_readme(default_version: default_ruby)
     create_test_file("test.sh", version: default_ruby)
     create_test_file("with_rbenv.sh", version: default_ruby)
+    create_test_file("with_precompiled_rubies.sh", version: default_ruby)
   end
 end

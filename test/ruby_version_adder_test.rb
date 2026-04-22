@@ -301,6 +301,9 @@ class RubyVersionAdderTest < Minitest::Test
 
     rbenv_content = read_test_file("with_rbenv.sh")
     assert_match(/3\.4\.0/, rbenv_content, "with_rbenv.sh should contain new version")
+
+    precompiled_content = read_test_file("with_precompiled_rubies.sh")
+    assert_match(/3\.4\.0/, precompiled_content, "with_precompiled_rubies.sh should contain new version")
   end
 
   def test_does_not_update_test_files_when_default_unchanged
@@ -336,6 +339,7 @@ class RubyVersionAdderTest < Minitest::Test
     assert_includes result[:files_modified], "features/src/ruby/README.md"
     assert_includes result[:files_modified], "features/test/ruby/test.sh"
     assert_includes result[:files_modified], "features/test/ruby/with_rbenv.sh"
+    assert_includes result[:files_modified], "features/test/ruby/with_precompiled_rubies.sh"
   end
 
   # ==========================================================================
@@ -486,5 +490,6 @@ class RubyVersionAdderTest < Minitest::Test
     create_readme(default_version: default_ruby)
     create_test_file("test.sh", version: default_ruby)
     create_test_file("with_rbenv.sh", version: default_ruby)
+    create_test_file("with_precompiled_rubies.sh", version: default_ruby)
   end
 end
