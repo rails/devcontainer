@@ -13,55 +13,15 @@ on:
         description: List of image versions to build. Should be an array ["ruby-1.1.0"]
 
 jobs:
-  build:
-    name: Build Images
-
-    strategy:
-      fail-fast: false
-      matrix:
-        RUBY_VERSION:  ${{ fromJSON(github.event.inputs.ruby_versions)}}
-        IMAGE_VERSION:  ${{ fromJSON(github.event.inputs.image_versions)}}
-        TARGET:
-          - RUNNER: ubuntu-24.04
-            BUILD_PLATFORM: linux/amd64
-            PLATFORM_SUFFIX: amd64
-          - RUNNER: ubuntu-24.04-arm
-            BUILD_PLATFORM: linux/arm64
-            PLATFORM_SUFFIX: arm64
-
-    runs-on: ${{ matrix.TARGET.RUNNER }}
+  publish:
+    name: Publish Images
+    uses: ./.github/workflows/publish-images-reusable.yaml
+    with:
+      ruby_versions_json: ${{ github.event.inputs.ruby_versions }}
+      image_versions_json: ${{ github.event.inputs.image_versions }}
+      repository_owner: ${{ github.repository_owner }}
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: read
       packages: write
-    steps:
-      - name: Build and Publish Image
-        uses: ./.github/actions/build-and-publish-image
-        with:
-          ruby_version: ${{ matrix.RUBY_VERSION }}
-          build_platform: ${{ matrix.TARGET.BUILD_PLATFORM }}
-          platform_suffix: ${{ matrix.TARGET.PLATFORM_SUFFIX }}
-          image_tag:  ${{ matrix.IMAGE_VERSION }}
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
-          repository_owner: ${{ github.repository_owner }}
-
-  publish-manifests:
-    name: Publish Multi-Arch Manifests
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        RUBY_VERSION:  ${{ fromJSON(github.event.inputs.ruby_versions)}}
-        IMAGE_VERSION:  ${{ fromJSON(github.event.inputs.image_versions)}}
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Publish Multi-Arch Manifest
-        uses: ./.github/actions/build-and-publish-image
-        with:
-          publish_manifest: "true"
-          ruby_version: ${{ matrix.RUBY_VERSION }}
-          image_tag: ${{ matrix.IMAGE_VERSION }}
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
-          repository_owner: ${{ github.repository_owner }}
