@@ -23,12 +23,21 @@ jobs:
       - name: Checkout (GitHub)
         uses: actions/checkout@v6
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+
       - id: normalize
+        env:
+          RUBY_VERSIONS: ${{ github.event.inputs.ruby_versions }}
+          IMAGE_VERSIONS: ${{ github.event.inputs.image_versions }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           ruby bin/normalize-publish-inputs \
-            --ruby-versions '${{ github.event.inputs.ruby_versions }}' \
-            --image-versions '${{ github.event.inputs.image_versions }}' \
-            --repository '${{ github.repository }}'
+            --ruby-versions "$RUBY_VERSIONS" \
+            --image-versions "$IMAGE_VERSIONS" \
+            --repository "$REPOSITORY"
 
   publish:
     name: Publish Images
