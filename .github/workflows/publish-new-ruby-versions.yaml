@@ -21,19 +21,47 @@ jobs:
       matrix:
         RUBY_VERSION:  ${{ fromJSON(github.event.inputs.ruby_versions)}}
         IMAGE_VERSION:  ${{ fromJSON(github.event.inputs.image_versions)}}
+        TARGET:
+          - RUNNER: ubuntu-24.04
+            BUILD_PLATFORM: linux/amd64
+            PLATFORM_SUFFIX: amd64
+          - RUNNER: ubuntu-24.04-arm
+            BUILD_PLATFORM: linux/arm64
+            PLATFORM_SUFFIX: arm64
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.TARGET.RUNNER }}
     permissions:
       contents: read
       packages: write
     steps:
-      - name: Checkout (GitHub)
-        uses: actions/checkout@v6
-
       - name: Build and Publish Image
         uses: ./.github/actions/build-and-publish-image
         with:
           ruby_version: ${{ matrix.RUBY_VERSION }}
+          build_platform: ${{ matrix.TARGET.BUILD_PLATFORM }}
+          platform_suffix: ${{ matrix.TARGET.PLATFORM_SUFFIX }}
           image_tag:  ${{ matrix.IMAGE_VERSION }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          repository_owner: ${{ github.repository_owner }}
+
+  publish-manifests:
+    name: Publish Multi-Arch Manifests
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        RUBY_VERSION:  ${{ fromJSON(github.event.inputs.ruby_versions)}}
+        IMAGE_VERSION:  ${{ fromJSON(github.event.inputs.image_versions)}}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Publish Multi-Arch Manifest
+        uses: ./.github/actions/build-and-publish-image
+        with:
+          publish_manifest: "true"
+          ruby_version: ${{ matrix.RUBY_VERSION }}
+          image_tag: ${{ matrix.IMAGE_VERSION }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}
           repository_owner: ${{ github.repository_owner }}
