@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "optparse"
+require_relative "../lib/commands/publish_input_normalizer"
+
+options = {
+  ruby_versions: ENV["RUBY_VERSIONS"],
+  image_versions: ENV["IMAGE_VERSIONS"] || "",
+  repository: ENV["REPOSITORY"] || ENV["GITHUB_REPOSITORY"]
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: ruby bin/normalize-publish-inputs [--ruby-versions LIST] [--image-versions LIST] [--repository OWNER/REPO]"
+
+  opts.on("--ruby-versions VALUE", "Comma/newline-separated Ruby versions") do |value|
+    options[:ruby_versions] = value
+  end
+
+  opts.on("--image-versions VALUE", "Optional comma/newline-separated image versions") do |value|
+    options[:image_versions] = value
+  end
+
+  opts.on("--repository VALUE", "Repository in OWNER/REPO format (defaults to GITHUB_REPOSITORY)") do |value|
+    options[:repository] = value
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit 0
+  end
+end
+
+begin
+  parser.parse!
+
+  unless options[:ruby_versions] && !options[:ruby_versions].strip.empty?
+    warn "--ruby-versions is required"
+    warn parser
+    exit 1
+  end
+
+  result = Commands::PublishInputNormalizer.call(
+    ruby_versions_input: options[:ruby_versions],
+    image_versions_input: options[:image_versions],
+    repository: options[:repository]
+  )
+
+  if ENV["GITHUB_OUTPUT"]
+    File.open(ENV["GITHUB_OUTPUT"], "a") do |f|
+      f.puts "ruby_versions_json=#{result[:ruby_versions_json]}"
+      f.puts "image_versions_json=#{result[:image_versions_json]}"
+    end
+  else
+    puts JSON.pretty_generate({
+      ruby_versions_json: result[:ruby_versions_json],
+      image_versions_json: result[:image_versions_json]
+    })
+  end
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
+  warn e.message
+  warn parser
+  exit 1
+rescue Commands::PublishInputNormalizer::Error => e
+  warn e.message
+  exit 1
+end

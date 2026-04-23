@@ -1,0 +1,77 @@
+name: Publish Images Reusable
+
+on:
+  workflow_call:
+    inputs:
+      ruby_versions_json:
+        required: true
+        type: string
+        description: JSON array of Ruby versions
+      image_versions_json:
+        required: true
+        type: string
+        description: JSON array of image tags
+      repository_owner:
+        required: true
+        type: string
+        description: Repository owner for GHCR login
+    secrets:
+      gh_token:
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build Images
+    strategy:
+      fail-fast: false
+      matrix:
+        RUBY_VERSION: ${{ fromJSON(inputs.ruby_versions_json) }}
+        IMAGE_VERSION: ${{ fromJSON(inputs.image_versions_json) }}
+        TARGET:
+          - RUNNER: ubuntu-24.04
+            BUILD_PLATFORM: linux/amd64
+            PLATFORM_SUFFIX: amd64
+          - RUNNER: ubuntu-24.04-arm
+            BUILD_PLATFORM: linux/arm64
+            PLATFORM_SUFFIX: arm64
+
+    runs-on: ${{ matrix.TARGET.RUNNER }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Build and Publish Image
+        uses: ./.github/actions/build-and-publish-image
+        with:
+          ruby_version: ${{ matrix.RUBY_VERSION }}
+          build_platform: ${{ matrix.TARGET.BUILD_PLATFORM }}
+          platform_suffix: ${{ matrix.TARGET.PLATFORM_SUFFIX }}
+          image_tag: ${{ matrix.IMAGE_VERSION }}
+          gh_token: ${{ secrets.gh_token }}
+          repository_owner: ${{ inputs.repository_owner }}
+
+  publish-manifests:
+    name: Publish Multi-Arch Manifests
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        RUBY_VERSION: ${{ fromJSON(inputs.ruby_versions_json) }}
+        IMAGE_VERSION: ${{ fromJSON(inputs.image_versions_json) }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Publish Multi-Arch Manifest
+        uses: ./.github/actions/build-and-publish-image
+        with:
+          publish_manifest: "true"
+          ruby_version: ${{ matrix.RUBY_VERSION }}
+          image_tag: ${{ matrix.IMAGE_VERSION }}
+          gh_token: ${{ secrets.gh_token }}
+          repository_owner: ${{ inputs.repository_owner }}

@@ -5,7 +5,7 @@ name: Build and Publish Images
       - ruby-*.*.*
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -13,24 +13,16 @@ jobs:
       - id: set-matrix
         run: echo "matrix=$(cat .github/ruby-versions.json | jq -c '.')" >> $GITHUB_OUTPUT
 
-  build:
-    name: Build Images
+  publish:
+    name: Publish Images
     needs: setup
-    strategy:
-      fail-fast: false
-      matrix:
-        RUBY_VERSION: ${{ fromJSON(needs.setup.outputs.matrix) }}
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/publish-images-reusable.yaml
+    with:
+      ruby_versions_json: ${{ needs.setup.outputs.matrix }}
+      image_versions_json: ${{ format('["{0}"]', github.ref_name) }}
+      repository_owner: ${{ github.repository_owner }}
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: read
       packages: write
-    steps:
-      - name: Checkout (GitHub)
-        uses: actions/checkout@v6
-      - name: Build and Publish Image
-        uses: ./.github/actions/build-and-publish-image
-        with:
-          ruby_version: ${{ matrix.RUBY_VERSION }}
-          image_tag: ${{ github.ref_name }}
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
-          repository_owner: ${{ github.repository_owner }}

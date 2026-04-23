@@ -1,9 +1,19 @@
 name: Build and Publish Image
 description: Steps for building an image for a specific ruby version
 inputs:
+  publish_manifest:
+    required: false
+    default: "false"
+    description: "Set to true to publish a multi-arch manifest instead of building"
   ruby_version:
     required: true
     description: "The version of Ruby to build the image for"
+  build_platform:
+    required: false
+    description: "The single platform to build (linux/amd64 or linux/arm64)"
+  platform_suffix:
+    required: false
+    description: "Platform suffix for arch-specific tags (amd64 or arm64)"
   image_tag:
     required: true
     description: "The tag to use for the image"
@@ -16,18 +26,31 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate required inputs
+      shell: bash
+      run: |
+        if [[ "${{ inputs.publish_manifest }}" != "true" ]]; then
+          if [[ -z "${{ inputs.build_platform }}" || -z "${{ inputs.platform_suffix }}" ]]; then
+            echo "build_platform and platform_suffix are required when publish_manifest is false"
+            exit 1
+          fi
+        fi
+
     - name: Checkout (GitHub)
+      if: ${{ inputs.publish_manifest != 'true' }}
       uses: actions/checkout@v6
       with:
         ref: ${{ inputs.image_tag }}
 
-    - name: Set up QEMU for multi-architecture builds
-      uses: docker/setup-qemu-action@v3
-
     - name: Set up Docker Buildx
+      if: ${{ inputs.publish_manifest != 'true' }}
       uses: docker/setup-buildx-action@v3
       with:
-        platforms: linux/amd64,linux/arm64
+        platforms: ${{ inputs.build_platform }}
+
+    - name: Set up Docker Buildx (manifest)
+      if: ${{ inputs.publish_manifest == 'true' }}
+      uses: docker/setup-buildx-action@v3
 
     - name: Set Image version env variable
       run: echo "IMAGE_VERSION=$(echo ${{ inputs.image_tag }} | tr -d ruby-)" >> $GITHUB_ENV
@@ -41,16 +64,25 @@ runs:
         password: ${{ inputs.gh_token }}
 
     - name: Pre-build Dev Container Image
+      if: ${{ inputs.publish_manifest != 'true' }}
       uses: devcontainers/ci@v0.3
       env:
         RUBY_VERSION: ${{ inputs.ruby_version }}
         BUILDX_NO_DEFAULT_ATTESTATIONS: true
       with:
         imageName: ghcr.io/rails/devcontainer/images/ruby
-        imageTag: ${{ env.IMAGE_VERSION }}-${{ inputs.ruby_version }},${{ inputs.ruby_version }}
+        imageTag: ${{ env.IMAGE_VERSION }}-${{ inputs.ruby_version }}-${{ inputs.platform_suffix }},${{ inputs.ruby_version }}-${{ inputs.platform_suffix }}
+        cacheFrom: ghcr.io/rails/devcontainer/images/ruby:${{ inputs.ruby_version }}-${{ inputs.platform_suffix }}
         subFolder: images/ruby
         push: always
-        platform: linux/amd64,linux/arm64
+        platform: ${{ inputs.build_platform }}
 
-    - name: Checkout (GitHub)
-      uses: actions/checkout@v6
+    - name: Create and push multi-arch manifest
+      if: ${{ inputs.publish_manifest == 'true' }}
+      shell: bash
+      run: |
+        docker buildx imagetools create \
+          -t ghcr.io/rails/devcontainer/images/ruby:${IMAGE_VERSION}-${{ inputs.ruby_version }} \
+          -t ghcr.io/rails/devcontainer/images/ruby:${{ inputs.ruby_version }} \
+          ghcr.io/rails/devcontainer/images/ruby:${IMAGE_VERSION}-${{ inputs.ruby_version }}-amd64 \
+          ghcr.io/rails/devcontainer/images/ruby:${IMAGE_VERSION}-${{ inputs.ruby_version }}-arm64
