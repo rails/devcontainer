@@ -33,11 +33,7 @@ jobs:
           RUBY_VERSIONS: ${{ github.event.inputs.ruby_versions }}
           IMAGE_VERSIONS: ${{ github.event.inputs.image_versions }}
           REPOSITORY: ${{ github.repository }}
-        run: |
-          ruby bin/normalize-publish-inputs \
-            --ruby-versions "$RUBY_VERSIONS" \
-            --image-versions "$IMAGE_VERSIONS" \
-            --repository "$REPOSITORY"
+        run: ruby bin/normalize-publish-inputs
 
   publish:
     name: Publish Images

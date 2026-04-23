@@ -6,13 +6,13 @@ require "optparse"
 require_relative "../lib/commands/publish_input_normalizer"
 
 options = {
-  ruby_versions: nil,
-  image_versions: "",
-  repository: ENV["GITHUB_REPOSITORY"]
+  ruby_versions: ENV["RUBY_VERSIONS"],
+  image_versions: ENV["IMAGE_VERSIONS"] || "",
+  repository: ENV["REPOSITORY"] || ENV["GITHUB_REPOSITORY"]
 }
 
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: ruby bin/normalize-publish-inputs --ruby-versions LIST [--image-versions LIST] [--repository OWNER/REPO]"
+  opts.banner = "Usage: ruby bin/normalize-publish-inputs [--ruby-versions LIST] [--image-versions LIST] [--repository OWNER/REPO]"
 
   opts.on("--ruby-versions VALUE", "Comma/newline-separated Ruby versions") do |value|
     options[:ruby_versions] = value
