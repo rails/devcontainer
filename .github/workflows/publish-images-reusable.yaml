@@ -44,6 +44,9 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v6
+
       - name: Build and Publish Image
         uses: ./.github/actions/build-and-publish-image
         with:
@@ -67,6 +70,9 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Checkout (GitHub)
+        uses: actions/checkout@v6
+
       - name: Publish Multi-Arch Manifest
         uses: ./.github/actions/build-and-publish-image
         with:
