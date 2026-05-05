@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-export POSTGRES_CLIENT_VERSION="${VERSION:-"15"}"
+export POSTGRES_CLIENT_VERSION="${VERSION:-"17"}"
 
 apt-get update -qq
 
