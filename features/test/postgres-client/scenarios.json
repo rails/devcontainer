@@ -1,17 +1,17 @@
 {
-  "version_16": {
+  "version_18": {
       "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
       "features": {
           "postgres-client": {
-            "version": "16"
+            "version": "18"
           }
       }
   },
-  "version_14": {
+  "version_16": {
     "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
     "features": {
       "postgres-client": {
-        "version": "14"
+        "version": "16"
       }
     }
   }
