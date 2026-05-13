@@ -77,7 +77,11 @@ install_ruby_rbenv() {
     _user="$1"
     _version="$2"
 
-    su "$_user" -c "RUBY_CONFIGURE_OPTS='--disable-install-doc' /usr/local/share/rbenv/bin/rbenv install $_version"
+    if [ "$_version" = "4.0.4" ]; then
+        su "$_user" -c "RUBY_CONFIGURE_OPTS='--disable-install-doc' /usr/local/share/rbenv/bin/rbenv install $_version"
+    else
+        su "$_user" -c "/usr/local/share/rbenv/bin/rbenv install $_version"
+    fi
     su "$_user" -c "/usr/local/share/rbenv/bin/rbenv global $_version"
 }
 
@@ -114,7 +118,11 @@ install_ruby_mise() {
         _home_dir="/home/$_user"
     fi
 
-    su "$_user" -c "RUBY_CONFIGURE_OPTS='--disable-install-doc' $_home_dir/.local/bin/mise install ruby@$_version"
+    if [ "$_version" = "4.0.4" ]; then
+        su "$_user" -c "RUBY_CONFIGURE_OPTS='--disable-install-doc' $_home_dir/.local/bin/mise install ruby@$_version"
+    else
+        su "$_user" -c "$_home_dir/.local/bin/mise install ruby@$_version"
+    fi
     su "$_user" -c "$_home_dir/.local/bin/mise use -g ruby@$_version"
     su "$_user" -c "$_home_dir/.local/bin/mise settings add idiomatic_version_file_enable_tools ruby"
 }
