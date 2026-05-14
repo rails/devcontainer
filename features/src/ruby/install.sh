@@ -72,13 +72,26 @@ setup_rbenv() {
     add_to_shell_init "$_user" 'eval "$(rbenv init -)"'
 }
 
+run_ruby_install_command() {
+    _user="$1"
+    _version="$2"
+    _command="$3"
+
+    _configure_opts=""
+    if [ "$_version" = "4.0.4" ]; then
+        _configure_opts="RUBY_CONFIGURE_OPTS='--disable-install-doc' "
+    fi
+
+    su "$_user" -c "${_configure_opts}${_command}"
+}
+
 # Function to install Ruby with rbenv
 install_ruby_rbenv() {
     _user="$1"
     _version="$2"
 
-    su "$_user" -c "/usr/local/share/rbenv/bin/rbenv install $_version"
-    su "$_user" -c "/usr/local/share/rbenv/bin/rbenv global $_version"
+    run_ruby_install_command "$_user" "$_version" "/usr/local/share/rbenv/bin/rbenv install \"$_version\""
+    su "$_user" -c "/usr/local/share/rbenv/bin/rbenv global \"$_version\""
 }
 
 # Function to setup mise
@@ -114,8 +127,8 @@ install_ruby_mise() {
         _home_dir="/home/$_user"
     fi
 
-    su "$_user" -c "$_home_dir/.local/bin/mise install ruby@$_version"
-    su "$_user" -c "$_home_dir/.local/bin/mise use -g ruby@$_version"
+    run_ruby_install_command "$_user" "$_version" "$_home_dir/.local/bin/mise install \"ruby@$_version\""
+    su "$_user" -c "$_home_dir/.local/bin/mise use -g \"ruby@$_version\""
     su "$_user" -c "$_home_dir/.local/bin/mise settings add idiomatic_version_file_enable_tools ruby"
 }
 
