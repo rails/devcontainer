@@ -1,0 +1,55 @@
+name: Check for New Git Version
+
+on:
+  schedule:
+    - cron: '23 6 * * 1'  # Weekly, Monday at 06:23 UTC
+  workflow_dispatch:  # Allow manual triggers
+
+permissions:
+  contents: write
+
+jobs:
+  check-git-version:
+    if: github.repository == 'rails/devcontainer'
+    runs-on: ubuntu-latest
+    env:
+      CONFIG: images/ruby/.devcontainer/devcontainer.json
+      BRANCH: automated/git-version
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Update pinned git version and create PR
+        env:
+          GH_TOKEN: ${{ secrets.RUBY_AUTOMATION_PAT }}
+        run: |
+          set -euo pipefail
+
+          latest=$(git ls-remote --tags --refs https://github.com/git/git 'v*' \
+            | sed 's#.*refs/tags/v##' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+
+          # The file has comments, so jq cannot parse it.
+          current=$(perl -0ne 'print $1 if m{features/git:1"\s*:\s*\{\s*"version"\s*:\s*"([^"]*)"}' "$CONFIG")
+          [ -n "$current" ] || { echo "::error::git feature version not found in $CONFIG"; exit 1; }
+
+          if [ "$current" = "$latest" ]; then
+            echo "Git feature is already at $latest."
+            exit 0
+          fi
+
+          NEW_VERSION="$latest" perl -0pi -e \
+            's{(features/git:1"\s*:\s*\{\s*"version"\s*:\s*")[^"]*(")}{$1$ENV{NEW_VERSION}$2}' "$CONFIG"
+
+          title="Bump git feature to $latest"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -am "$title"
+          git push --force origin "$BRANCH"
+
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr edit "$BRANCH" --title "$title"
+          else
+            gh pr create --head "$BRANCH" --title "$title" --label automation \
+              --body "Bumps the pinned \`git\` dev container feature from \`$current\` to \`$latest\`."
+          fi
