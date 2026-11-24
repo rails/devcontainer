@@ -12,7 +12,7 @@
       "upgradePackages": "true"
     },
     "ghcr.io/devcontainers/features/git:1": {
-      "version": "latest",
+      "version": "2.56.1",
       "ppa": "false"
     },
     "ghcr.io/rails/devcontainer/features/ruby": {
