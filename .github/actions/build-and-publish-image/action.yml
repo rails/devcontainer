@@ -8,6 +8,9 @@ inputs:
   ruby_version:
     required: true
     description: "The version of Ruby to build the image for"
+  git_version:
+    required: false
+    description: "The exact Git version to use instead of latest when building an image"
   build_platform:
     required: false
     description: "The single platform to build (linux/amd64 or linux/arm64)"
@@ -41,6 +44,23 @@ runs:
       uses: actions/checkout@v6
       with:
         ref: ${{ inputs.image_tag }}
+
+    - name: Use the resolved Git version
+      if: ${{ inputs.publish_manifest != 'true' }}
+      shell: bash
+      env:
+        GIT_VERSION: ${{ inputs.git_version }}
+      run: |
+        # Update the checked-out config, including for older tags. The Git feature skips its API lookup for exact versions.
+        ruby -rjson -e '
+          path, version = ARGV
+          config = JSON.parse(File.read(path))
+          git = config.dig("features", "ghcr.io/devcontainers/features/git:1")
+          exit unless git && git["version"] == "latest"
+
+          git["version"] = version
+          File.write(path, JSON.pretty_generate(config) + "\n")
+        ' images/ruby/.devcontainer/devcontainer.json "${GIT_VERSION:?}"
 
     - name: Set up Docker Buildx
       if: ${{ inputs.publish_manifest != 'true' }}

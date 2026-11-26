@@ -24,8 +24,27 @@ defaults:
     shell: bash
 
 jobs:
+  resolve-git-version:
+    name: Resolve Git Version
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      git_version: ${{ steps.git-version.outputs.git_version }}
+    steps:
+      - id: git-version
+        env:
+          GH_TOKEN: ${{ secrets.gh_token }}
+        run: |
+          git_version=$(gh api repos/git/git/tags --jq '
+            map(.name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$")) | ltrimstr("v"))
+            | max_by(split(".") | map(tonumber)) // error("No stable Git tag found")
+          ')
+          printf 'git_version=%s\n' "$git_version" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build Images
+    needs: resolve-git-version
     strategy:
       fail-fast: false
       matrix:
@@ -51,6 +70,7 @@ jobs:
         uses: ./.github/actions/build-and-publish-image
         with:
           ruby_version: ${{ matrix.RUBY_VERSION }}
+          git_version: ${{ needs.resolve-git-version.outputs.git_version }}
           build_platform: ${{ matrix.TARGET.BUILD_PLATFORM }}
           platform_suffix: ${{ matrix.TARGET.PLATFORM_SUFFIX }}
           image_tag: ${{ matrix.IMAGE_VERSION }}

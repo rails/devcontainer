@@ -40,6 +40,9 @@ The image is published using the [devcontainers/ci](https://github.com/devcontai
 is kicked off by the creation of a new tag on Github. Tags should be in the form `ruby-*.*.*`, where the * represent
 the **image version** (not the ruby version). Images will be published for all [maintained Ruby versions](https://www.ruby-lang.org/en/downloads/).
 
+The workflow uses `GITHUB_TOKEN` to find the latest stable Git version before it starts the builds.
+Each build uses the same Git version. The workflow does not pass the token to the Docker build.
+
 ## Publishing new Ruby versions
 
 When a new Ruby version is released, we need to add it to the build matrix and potentially update the default version.
