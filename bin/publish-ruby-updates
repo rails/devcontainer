@@ -1,0 +1,94 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "optparse"
+require_relative "../lib/commands/publish_ruby_updates"
+
+options = {
+  before_ref: ENV["BEFORE_SHA"],
+  after_ref: ENV["AFTER_SHA"],
+  repository: ENV["REPOSITORY"] || ENV["GITHUB_REPOSITORY"],
+  working_dir: Dir.pwd,
+  dry_run: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/publish-ruby-updates [options]"
+
+  opts.on("--before-ref VALUE", "Git ref before the push (defaults to BEFORE_SHA)") do |value|
+    options[:before_ref] = value
+  end
+
+  opts.on("--after-ref VALUE", "Git ref after the push (defaults to AFTER_SHA)") do |value|
+    options[:after_ref] = value
+  end
+
+  opts.on("--repository VALUE", "Repository in OWNER/REPO format (defaults to REPOSITORY or GITHUB_REPOSITORY)") do |value|
+    options[:repository] = value
+  end
+
+  opts.on("--working-dir PATH", "Git working directory (defaults to the current directory)") do |value|
+    options[:working_dir] = value
+  end
+
+  opts.on("--dry-run", "Show the release decision without creating a tag or dispatching a workflow") do
+    options[:dry_run] = true
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit 0
+  end
+end
+
+begin
+  parser.parse!
+
+  %i[before_ref after_ref repository].each do |option|
+    if options[option].to_s.strip.empty?
+      raise OptionParser::MissingArgument, "--#{option.to_s.tr('_', '-')}"
+    end
+  end
+
+  result = Commands::PublishRubyUpdates.call(**options, github_token: ENV["GITHUB_TOKEN"])
+
+  if ENV["GITHUB_OUTPUT"]
+    File.open(ENV["GITHUB_OUTPUT"], "a") do |file|
+      file.puts "mode=#{result[:mode]}"
+      file.puts "ruby_versions_json=#{JSON.generate(result[:ruby_versions])}"
+      file.puts "image_tag=#{result[:image_tag]}"
+      file.puts "source_sha=#{result[:source_sha]}"
+      file.puts "create_tag=#{result[:create_tag]}"
+    end
+  else
+    puts JSON.pretty_generate(result)
+  end
+
+  if ENV["GITHUB_STEP_SUMMARY"]
+    File.open(ENV["GITHUB_STEP_SUMMARY"], "a") do |file|
+      heading = if options[:dry_run]
+        "Ruby image release preview"
+      elsif result[:mode] == "none"
+        "No Ruby image workflow dispatch"
+      else
+        "Ruby image workflow dispatch"
+      end
+      file.puts "### #{heading}", ""
+      file.puts "- Route: `#{result[:mode]}`"
+      file.puts "- Source SHA: `#{result[:source_sha]}`"
+      file.puts "- Ruby versions: #{result[:ruby_versions].empty? ? 'none' : result[:ruby_versions].join(', ')}"
+      file.puts "- Image tag: #{result[:image_tag] || 'none'}"
+      if options[:dry_run]
+        file.puts "", "After approval, the publish job makes a new decision with the latest image tag."
+      end
+    end
+  end
+rescue OptionParser::ParseError => e
+  warn e.message
+  warn parser
+  exit 1
+rescue Commands::PublishRubyUpdates::Error, SystemCallError => e
+  warn e.message
+  exit 1
+end
