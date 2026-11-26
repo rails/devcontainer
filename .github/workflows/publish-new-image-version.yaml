@@ -3,15 +3,37 @@ name: Build and Publish Images
   push:
     tags:
       - ruby-*.*.*
+  workflow_dispatch:
+    inputs:
+      image_version:
+        type: string
+        required: true
+        description: "Enter a complete image tag, such as ruby-2.3.8."
 jobs:
   setup:
     runs-on: ubuntu-24.04
+    env:
+      IMAGE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.image_version }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      image_versions_json: ${{ steps.set-matrix.outputs.image_versions_json }}
     steps:
+      - name: Validate image tag
+        run: |
+          if [[ ! "$IMAGE_TAG" =~ ^ruby-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Enter an image tag in ruby-X.Y.Z format.' >&2
+            exit 1
+          fi
+
       - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ env.IMAGE_TAG }}
+
       - id: set-matrix
-        run: echo "matrix=$(cat .github/ruby-versions.json | jq -c '.')" >> $GITHUB_OUTPUT
+        run: |
+          matrix=$(jq -c '.' .github/ruby-versions.json)
+          image_versions_json=$(jq -cn --arg tag "$IMAGE_TAG" '[$tag]')
+          printf 'matrix=%s\nimage_versions_json=%s\n' "$matrix" "$image_versions_json" >> "$GITHUB_OUTPUT"
 
   publish:
     name: Publish Images
@@ -19,7 +41,7 @@ jobs:
     uses: ./.github/workflows/publish-images-reusable.yaml
     with:
       ruby_versions_json: ${{ needs.setup.outputs.matrix }}
-      image_versions_json: ${{ format('["{0}"]', github.ref_name) }}
+      image_versions_json: ${{ needs.setup.outputs.image_versions_json }}
       repository_owner: ${{ github.repository_owner }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}

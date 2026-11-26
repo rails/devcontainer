@@ -27,18 +27,21 @@ new version of that feature to `ghcr.io/rails/devcontainer/features/[feature nam
 
 ## Contributing to the ruby image
 
-The ruby image consists of a dev container that utilizes the ruby feature in addition to some common utilities. Thus
-changes to how ruby is installed (eg installation of additional dependencies) should be made to the ruby feature. When
-a new version of the feature is published, and new version of the image will also be published.
+The Ruby image uses the Ruby feature and includes common utilities. Make changes to the Ruby installation in the feature.
+A Ruby feature version increase starts the approval process for a full image release.
 
 For other changes to the image not related to the ruby installation, issues or pull requests can be opened following
 the same process as for features.
 
 ## Publish the image
 
-The image is published using the [devcontainers/ci](https://github.com/devcontainers/ci) Github Action. This workflow
-is kicked off by the creation of a new tag on Github. Tags should be in the form `ruby-*.*.*`, where the * represent
-the **image version** (not the ruby version). Images will be published for all [maintained Ruby versions](https://www.ruby-lang.org/en/downloads/).
+The **Build and Publish Images** workflow uses [devcontainers/ci](https://github.com/devcontainers/ci).
+For changes to the image source alone, push a tag such as `ruby-2.3.8` to start the workflow.
+The tag identifies the image version, not the Ruby feature version or the Ruby version.
+The workflow builds images for all Ruby versions in `.github/ruby-versions.json` at that tag.
+
+You can also run the workflow manually with an existing tag in the `image_version` input.
+Use this option if a tag exists but GitHub did not start the workflow.
 
 The workflow uses `GITHUB_TOKEN` to find the latest stable Git version before it starts the builds.
 Each build uses the same Git version. The workflow does not pass the token to the Docker build.
@@ -56,7 +59,7 @@ bin/add-ruby-version 3.4.5
 ```
 
 This script will:
-- Add the version to the build matrix in `.github/workflows/publish-new-image-version.yaml`
+- Add the version to the build matrix in `.github/ruby-versions.json`
 - Update the default version in `features/src/ruby/devcontainer-feature.json` if the new version is newer
 - Bump the feature version (patch increment) when the default Ruby version changes
 - Update test files to use the new Ruby version
@@ -65,19 +68,21 @@ This script will:
 
 After running the script, review the changes with `git diff`, commit them, and push.
 
-### Step 2: Publish the Ruby version
+### Step 2: Approve the image workflow
 
-You have two options:
+After feature publication succeeds on `main`, the release workflow checks whether it must dispatch an image workflow.
+If it selects an image workflow, the `publish-images` job waits for one Rails Core approval in the `production` environment.
+After approval, the job checks the latest image tag again.
 
-#### Option A: Publish specific Ruby versions (common)
+- If the target feature version is newer than the feature version at the latest image tag, the job creates the next image patch tag.
+  It dispatches **Build and Publish Images** for the full matrix.
+- If a push increases the feature version and the latest image tag points to that push, the job reuses the tag.
+- If only Ruby versions are missing, the job dispatches **Build and Publish New Ruby Versions** with those additions and the latest image tag.
+- If a newer release already includes the changes, the job skips the dispatch.
 
-For immediate publishing of specific Ruby versions without cutting a new image version, run the **Publish New Ruby Versions** workflow manually. The workflow takes a list of ruby versions and image tags as inputs, formatted as comma separated arrays:
+To build specific versions manually, run **Build and Publish New Ruby Versions** with comma-separated inputs:
 
+```text
+ruby_versions: 3.4.5
+image_versions: ruby-2.3.8
 ```
-ruby_versions: ["3.4.5"]
-image_versions: ["ruby-1.1.0"]
-```
-
-#### Option B: Wait for next image release (automatic)
-
-When a new image version is released (triggered by creating a `ruby-*.*.*` tag), the automatic workflow will build images for all Ruby versions in the matrix, including the newly added one.
